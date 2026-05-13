@@ -436,10 +436,16 @@
         <div class="grid">
           <div class="panel">
             <h2>Pick a Team</h2>
-            <p>Enter the colleague name, then hit the button. The football oracle will do the chaos politely.</p>
+            <p>Admin must unlock the picker before names can be added. Once unlocked, enter the colleague name, then hit the button.</p>
+            <div id="pickerLockNotice" class="entry-card" style="margin: 14px 0;">
+              <div>
+                <div class="name">Picker locked</div>
+                <div class="small">Go to Admin and enter the PIN to unlock adding players.</div>
+              </div>
+            </div>
             <div class="form-row">
-              <input id="personName" placeholder="Enter name, e.g. James Nelson" autocomplete="off" />
-              <button class="primary" id="pickBtn">Pick Random Team</button>
+              <input id="personName" placeholder="Enter name, e.g. James Nelson" autocomplete="off" disabled />
+              <button class="primary" id="pickBtn" disabled>Pick Random Team</button>
             </div>
             <div class="pick-stage">
               <div class="ball"><strong>Press<br>Pick</strong></div>
@@ -553,6 +559,7 @@
     };
 
     const ADMIN_PIN = "2026";
+    let adminUnlocked = false;
 
     const DEFAULT_TEAMS = [
       { group: "Group A", name: "Mexico" },
@@ -629,6 +636,7 @@
       availableTeams: $("#availableTeams"),
       adminPin: $("#adminPin"),
       loginBtn: $("#loginBtn"),
+      pickerLockNotice: $("#pickerLockNotice"),
       adminLock: $("#adminLock"),
       adminContent: $("#adminContent"),
       teamsInput: $("#teamsInput"),
@@ -766,11 +774,19 @@
       });
     }
 
+    function renderAccessState() {
+      elements.personName.disabled = !adminUnlocked;
+      elements.pickBtn.disabled = !adminUnlocked;
+      elements.pickerLockNotice.style.display = adminUnlocked ? "none" : "grid";
+      elements.pickBtn.textContent = adminUnlocked ? "Pick Random Team" : "Locked";
+    }
+
     function renderAll() {
       renderStats();
       renderLeaderboard();
       renderBrackets();
       renderAdmin();
+      renderAccessState();
     }
 
     async function seedDefaultTeamsIfEmpty() {
@@ -785,6 +801,11 @@
     }
 
     async function pickRandomTeam() {
+      if (!adminUnlocked) {
+        toast("Picker is locked. Unlock it in Admin first.");
+        return;
+      }
+
       const name = normalizeName(elements.personName.value);
       if (!name) return toast("Enter a name first.");
       if (!teams.length) return toast("No teams found. Add teams in Admin.");
@@ -838,6 +859,11 @@
     }
 
     async function addManualEntry() {
+      if (!adminUnlocked) {
+        toast("Admin is locked.");
+        return;
+      }
+
       const name = normalizeName(elements.manualName.value);
       const selectedName = elements.manualTeam.value;
       const selectedTeam = teams.find(team => team.name === selectedName);
@@ -856,6 +882,11 @@
     }
 
     async function clearEntries() {
+      if (!adminUnlocked) {
+        toast("Admin is locked.");
+        return;
+      }
+
       const ok = confirm("Clear all World Cup picks? This cannot be undone.");
       if (!ok) return;
       const snap = await getDocs(entriesCol);
@@ -866,6 +897,11 @@
     }
 
     function exportCsv() {
+      if (!adminUnlocked) {
+        toast("Admin is locked.");
+        return;
+      }
+
       const rows = [["Name", "Team", "Group"]];
       entries.forEach(entry => rows.push([entry.name, entry.team, entry.group || ""]));
       const csv = rows.map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\n");
@@ -892,17 +928,27 @@
       if (event.key === "Enter") pickRandomTeam();
     });
 
-    elements.loginBtn.addEventListener("click", () => {
-      if (elements.adminPin.value === ADMIN_PIN) {
+    function unlockAdmin() {
+      if (elements.adminPin.value.trim() === ADMIN_PIN) {
+        adminUnlocked = true;
         elements.adminLock.style.display = "none";
         elements.adminContent.style.display = "block";
-        toast("Admin unlocked.");
+        renderAccessState();
+        toast("Admin unlocked. Picker is now live.");
       } else {
         toast("Wrong PIN.");
       }
+    }
+
+    elements.loginBtn.addEventListener("click", unlockAdmin);
+    elements.adminPin.addEventListener("keydown", event => {
+      if (event.key === "Enter") unlockAdmin();
     });
 
-    elements.saveTeamsBtn.addEventListener("click", () => replaceTeams(parseTeamsInput(elements.teamsInput.value)));
+    elements.saveTeamsBtn.addEventListener("click", () => {
+      if (!adminUnlocked) return toast("Admin is locked.");
+      replaceTeams(parseTeamsInput(elements.teamsInput.value));
+    });
     elements.loadDefaultBtn.addEventListener("click", () => {
       elements.teamsInput.value = DEFAULT_TEAMS.map(team => `${team.group} | ${team.name}`).join("\n");
       toast("Default 2026 teams loaded into the editor. Press Save Teams to apply.");
