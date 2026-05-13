@@ -621,7 +621,7 @@
       </section>
     </main>
 
-    <div class="footer-note">Built for GXO teams. Frontend: GitHub/Vercel. Backend: Firebase Firestore.</div>
+    <div class="footer-note">Built for GXO teams. Frontend: GitHub/Vercel. Backend: Firebase Realtime Database.</div>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -629,24 +629,21 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import {
-      getFirestore,
-      collection,
-      doc,
-      addDoc,
-      setDoc,
-      deleteDoc,
-      getDocs,
-      onSnapshot,
-      serverTimestamp,
-      query,
-      orderBy,
-      writeBatch
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+      getDatabase,
+      ref,
+      push,
+      set,
+      remove,
+      get,
+      onValue,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBa_jskIfzTq1p3tfDihKcw2PIdnbqHUeg",
       authDomain: "worldcup-7b648.firebaseapp.com",
       projectId: "worldcup-7b648",
+      databaseURL: "https://worldcup-7b648-default-rtdb.firebaseio.com/",
       storageBucket: "worldcup-7b648.appspot.com",
       messagingSenderId: "594251153437",
       appId: "1:594251153437:web:782b7c8808f63c269d46f4"
@@ -707,10 +704,10 @@
     ];
 
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    const db = getDatabase(app);
 
-    const teamsCol = collection(db, "worldcup_teams");
-    const entriesCol = collection(db, "worldcup_entries");
+    const teamsRef = ref(db, "worldcup_teams");
+    const entriesRef = ref(db, "worldcup_entries");
 
     let teams = [];
     let entries = [];
@@ -878,7 +875,7 @@
 
       $$('[data-delete-entry]').forEach(button => {
         button.addEventListener("click", async () => {
-          await deleteDoc(doc(db, "worldcup_entries", button.dataset.deleteEntry));
+          await withTimeout(remove(ref(db, `worldcup_entries/${button.dataset.deleteEntry}`)), "Deleting entry");
           toast("Entry deleted.");
         });
       });
@@ -899,15 +896,20 @@
       renderAccessState();
     }
 
+    function snapshotToArray(snapshot) {
+      const data = snapshot.val() || {};
+      return Object.entries(data).map(([id, value]) => ({ id, ...value }));
+    }
+
     async function seedDefaultTeamsIfEmpty() {
-      const snap = await withTimeout(getDocs(teamsCol), "Loading teams");
-      if (!snap.empty) return;
-      const batch = writeBatch(db);
+      const snap = await withTimeout(get(teamsRef), "Loading teams");
+      if (snap.exists()) return;
+      const teamData = {};
       DEFAULT_TEAMS.forEach(team => {
         const id = team.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-        batch.set(doc(db, "worldcup_teams", id), { ...team, createdAt: serverTimestamp() });
+        teamData[id] = { ...team, createdAt: serverTimestamp() };
       });
-      await withTimeout(batch.commit(), "Saving default teams");
+      await withTimeout(set(teamsRef, teamData), "Saving default teams");
     }
 
     function runDrawAnimation(finalTeamName, personName) {
@@ -966,12 +968,12 @@
       try {
         runDrawAnimation(chosen.name, name);
 
-        await addDoc(entriesCol, {
+        await withTimeout(push(entriesRef, {
           name,
           team: chosen.name,
           group: chosen.group,
           createdAt: serverTimestamp()
-        });
+        }), "Adding pick");
 
         elements.teamResult.innerHTML = `<span class="small">${escapeHtml(name)} picked</span><strong>${escapeHtml(chosen.name)}</strong>`;
         elements.personName.value = "";
@@ -1004,14 +1006,13 @@
       elements.saveTeamsBtn.textContent = "Saving...";
 
       try {
-        const batch = writeBatch(db);
-        const oldSnap = await withTimeout(getDocs(teamsCol), "Reading old teams");
-        oldSnap.forEach(docSnap => batch.delete(doc(db, "worldcup_teams", docSnap.id)));
+        const teamData = {};
         newTeams.forEach(team => {
           const cleanId = team.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || crypto.randomUUID();
-          batch.set(doc(db, "worldcup_teams", cleanId), { ...team, createdAt: serverTimestamp() });
+          teamData[cleanId] = { ...team, createdAt: serverTimestamp() };
         });
-        await withTimeout(batch.commit(), "Saving teams");
+
+        await withTimeout(set(teamsRef, teamData), "Saving teams");
         adminIsEditingTeams = false;
         toast("Teams saved. Picker is ready.");
       } catch (error) {
@@ -1035,13 +1036,13 @@
       if (!name || !selectedTeam) return toast("Add a name and select a team.");
 
       try {
-        await addDoc(entriesCol, {
+        await withTimeout(push(entriesRef, {
           name,
           team: selectedTeam.name,
           group: selectedTeam.group,
           createdAt: serverTimestamp(),
           manual: true
-        });
+        }), "Adding manual entry");
 
         elements.manualName.value = "";
         toast("Manual entry added.");
@@ -1059,10 +1060,7 @@
 
       const ok = confirm("Clear all World Cup picks? This cannot be undone.");
       if (!ok) return;
-      const snap = await withTimeout(getDocs(entriesCol), "Loading entries");
-      const batch = writeBatch(db);
-      snap.forEach(docSnap => batch.delete(doc(db, "worldcup_entries", docSnap.id)));
-      await withTimeout(batch.commit(), "Clearing picks");
+      await withTimeout(remove(entriesRef), "Clearing picks");
       toast("All picks cleared.");
     }
 
@@ -1150,19 +1148,26 @@
       try {
         await seedDefaultTeamsIfEmpty();
 
-        onSnapshot(query(teamsCol, orderBy("group")), snapshot => {
-          teams = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
+        onValue(teamsRef, snapshot => {
+          teams = snapshotToArray(snapshot)
             .sort((a, b) => String(a.group).localeCompare(String(b.group), undefined, { numeric: true }) || String(a.name).localeCompare(String(b.name)));
           renderAll();
+        }, error => {
+          console.error(error);
+          toast(`Teams database error: ${error.message}`);
         });
 
-        onSnapshot(query(entriesCol, orderBy("createdAt", "desc")), snapshot => {
-          entries = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+        onValue(entriesRef, snapshot => {
+          entries = snapshotToArray(snapshot)
+            .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
           renderAll();
+        }, error => {
+          console.error(error);
+          toast(`Entries database error: ${error.message}`);
         });
       } catch (error) {
         console.error(error);
-        toast("Firebase error. Check Firestore is enabled and rules allow reads/writes.");
+        toast("Firebase error. Check Realtime Database is enabled and rules allow reads/writes.");
       }
     }
 
