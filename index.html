@@ -337,6 +337,92 @@
       line-height: 1;
     }
 
+    /* MONEY POT */
+    .pot {
+      position: relative;
+      margin: 0 0 18px;
+      padding: 22px 26px;
+      border-radius: 26px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 18px;
+      background:
+        radial-gradient(circle at 80% 20%, rgba(255,209,102,0.5), transparent 55%),
+        linear-gradient(135deg, #1a1305, #2a1a04 60%, #3a1f00);
+      border: 1px solid rgba(255,209,102,0.45);
+      box-shadow:
+        0 22px 60px rgba(255,90,0,0.22),
+        inset 0 1px 0 rgba(255,255,255,0.12);
+      overflow: hidden;
+    }
+
+    .pot::before {
+      content: "";
+      position: absolute;
+      inset: -40% -10% auto auto;
+      width: 280px; height: 280px;
+      background: radial-gradient(circle, rgba(255,209,102,0.35), transparent 60%);
+      filter: blur(8px);
+      pointer-events: none;
+    }
+
+    .pot-label {
+      font-family: Oswald, Inter, sans-serif;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pot-label::before {
+      content: "";
+      display: inline-block;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 14px var(--gold);
+      animation: potBlink 1.8s ease-in-out infinite;
+    }
+
+    @keyframes potBlink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .35; transform: scale(.7); }
+    }
+
+    .pot-amount {
+      font-family: Oswald, Inter, sans-serif;
+      font-size: clamp(46px, 7vw, 88px);
+      font-weight: 700;
+      line-height: 0.9;
+      letter-spacing: -2px;
+      color: #fff;
+      text-shadow: 0 4px 24px rgba(255,209,102,0.4);
+      margin-top: 6px;
+    }
+
+    .pot-amount.bump {
+      animation: potBump .6s cubic-bezier(.2,.9,.3,1.2);
+    }
+
+    @keyframes potBump {
+      0%   { transform: scale(1); color: #fff; }
+      40%  { transform: scale(1.18); color: var(--gold); text-shadow: 0 0 40px var(--gold); }
+      100% { transform: scale(1); color: #fff; }
+    }
+
+    .pot-meta {
+      text-align: right;
+      color: var(--gxo-muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .pot-meta b { color: var(--gxo-white); font-size: 15px; font-weight: 800; display: block; }
+
     .stat-row {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -357,7 +443,7 @@
     .leaderboard, .entries-list {
       display: grid;
       gap: 10px;
-      max-height: 620px;
+      max-height: 720px;
       overflow: auto;
       padding-right: 4px;
     }
@@ -376,6 +462,34 @@
     .entry-card .name { font-weight: 900; }
     .entry-card .team { color: var(--gold); font-weight: 900; }
     .small { color: var(--gxo-muted); font-size: 12px; }
+
+    .teams-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .chip {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255,209,102,0.18);
+      border: 1px solid rgba(255,209,102,0.35);
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .3px;
+    }
+
+    .person-card .team-count {
+      background: var(--gold);
+      color: #1a0c00;
+      font-weight: 950;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
 
     .page { display: none; }
     .page.active { display: block; }
@@ -498,6 +612,8 @@
       .pick-stage { min-height: 310px; }
       .draw-machine { min-height: 230px; padding: 18px; }
       .slot-name { min-height: 76px; }
+      .pot { grid-template-columns: 1fr; }
+      .pot-meta { text-align: left; }
     }
   </style>
 </head>
@@ -508,7 +624,7 @@
         <div class="logo-mark">GXO</div>
         <div>
           <h1>World Cup Picker</h1>
-          <div class="subtitle">A live office sweepstake board. Add a name, press pick, and the app randomly assigns a team from the admin team list.</div>
+          <div class="subtitle">A live office sweepstake board. Add a name, press pick, and the app randomly assigns a team. Each entry adds £2 to the pot. One person can hold as many teams as they like.</div>
           <div class="football-strip"><i></i><i></i><i></i><i></i><i></i></div>
         </div>
       </div>
@@ -521,10 +637,22 @@
 
     <main>
       <section id="pickerPage" class="page active">
+
+        <div class="pot">
+          <div>
+            <div class="pot-label">Prize Pot · £2 per entry</div>
+            <div class="pot-amount" id="potAmount">£0</div>
+          </div>
+          <div class="pot-meta">
+            <b id="potEntries">0 entries</b>
+            Live · updates instantly
+          </div>
+        </div>
+
         <div class="grid">
           <div class="panel">
             <h2>Pick a Team</h2>
-            <p>Admin must unlock the picker before names can be added. Once unlocked, enter the colleague name, then hit the button.</p>
+            <p>Admin must unlock the picker before names can be added. Once unlocked, enter a name and hit the button. The same name can pick again as many times as you like — every entry costs £2.</p>
             <div id="pickerLockNotice" class="entry-card" style="margin: 14px 0;">
               <div>
                 <div class="name">Picker locked</div>
@@ -557,7 +685,7 @@
 
           <div class="panel">
             <h2>Live Board</h2>
-            <p>Everyone who has entered the sweepstake appears here instantly.</p>
+            <p>Everyone in the sweepstake, grouped by person. Each chip is one £2 entry.</p>
             <div class="leaderboard" id="leaderboard"></div>
           </div>
         </div>
@@ -566,7 +694,7 @@
       <section id="bracketPage" class="page">
         <div class="panel">
           <h2>Team Brackets</h2>
-          <p>Grouped by World Cup group. The number next to each team shows how many people currently have that team.</p>
+          <p>Grouped by World Cup group. The number next to each team shows how many entries currently hold that team.</p>
           <div class="toolbar">
             <button class="primary" id="sortGroupBtn">Group View</button>
             <button id="sortCountBtn">Most Picked</button>
@@ -599,11 +727,11 @@
 
             <div class="panel">
               <h2>Manual Entry</h2>
-              <p>Use this if someone needs adding manually or you want to assign a specific team.</p>
+              <p>Use this if someone needs adding manually or you want to assign a specific team. Multiple entries per person are allowed.</p>
               <input id="manualName" placeholder="Name" style="margin-bottom:10px;" />
               <select id="manualTeam" style="margin-bottom:10px;"></select>
               <div class="toolbar">
-                <button class="success" id="manualAddBtn">Add Entry</button>
+                <button class="success" id="manualAddBtn">Add Entry (+£2)</button>
               </div>
               <h2 style="margin-top:22px;">Admin Actions</h2>
               <div class="toolbar">
@@ -650,6 +778,7 @@
     };
 
     const ADMIN_PIN = "2026";
+    const ENTRY_PRICE = 2; // £ per entry — change here if needed
     let adminUnlocked = false;
 
     const DEFAULT_TEAMS = [
@@ -713,6 +842,7 @@
     let entries = [];
     let bracketMode = "group";
     let adminIsEditingTeams = false;
+    let lastEntriesCount = 0;
 
     const $ = (selector) => document.querySelector(selector);
     const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -729,6 +859,8 @@
       totalPicks: $("#totalPicks"),
       teamsUsed: $("#teamsUsed"),
       availableTeams: $("#availableTeams"),
+      potAmount: $("#potAmount"),
+      potEntries: $("#potEntries"),
       adminPin: $("#adminPin"),
       loginBtn: $("#loginBtn"),
       pickerLockNotice: $("#pickerLockNotice"),
@@ -776,6 +908,10 @@
         .replaceAll("'", "&#039;");
     }
 
+    function formatMoney(amount) {
+      return "£" + Number(amount).toLocaleString("en-GB");
+    }
+
     function countByTeam() {
       return entries.reduce((acc, entry) => {
         acc[entry.team] = (acc[entry.team] || 0) + 1;
@@ -783,6 +919,8 @@
       }, {});
     }
 
+    // Available teams = teams that no one has been assigned yet.
+    // Used to prefer fresh teams when picking. If empty, we allow re-picks.
     function getAvailableTeams() {
       const picked = new Set(entries.map(entry => entry.team));
       return teams.filter(team => !picked.has(team.name));
@@ -795,19 +933,52 @@
       elements.availableTeams.textContent = getAvailableTeams().length;
     }
 
+    function renderPot() {
+      const count = entries.length;
+      const total = count * ENTRY_PRICE;
+      elements.potAmount.textContent = formatMoney(total);
+      elements.potEntries.textContent = `${count} entr${count === 1 ? "y" : "ies"} · £${ENTRY_PRICE} each`;
+
+      // bump animation when the count goes up
+      if (count > lastEntriesCount) {
+        elements.potAmount.classList.remove("bump");
+        // force reflow so we can re-add the class
+        void elements.potAmount.offsetWidth;
+        elements.potAmount.classList.add("bump");
+      }
+      lastEntriesCount = count;
+    }
+
+    // Group entries by person (case-insensitive), preserving display casing of first occurrence
+    function groupEntriesByPerson() {
+      const map = new Map();
+      entries.forEach(entry => {
+        const key = entry.name.toLowerCase();
+        if (!map.has(key)) {
+          map.set(key, { displayName: entry.name, picks: [] });
+        }
+        map.get(key).picks.push(entry);
+      });
+      return [...map.values()].sort((a, b) => b.picks.length - a.picks.length || a.displayName.localeCompare(b.displayName));
+    }
+
     function renderLeaderboard() {
       if (!entries.length) {
         elements.leaderboard.innerHTML = `<div class="entry-card"><div><div class="name">No picks yet</div><div class="small">The board is waiting for its first brave soul.</div></div></div>`;
         return;
       }
 
-      elements.leaderboard.innerHTML = entries.map(entry => `
-        <div class="entry-card">
+      const people = groupEntriesByPerson();
+
+      elements.leaderboard.innerHTML = people.map(person => `
+        <div class="entry-card person-card">
           <div>
-            <div class="name">${escapeHtml(entry.name)}</div>
-            <div class="small">${escapeHtml(entry.group || "No group")}</div>
+            <div class="name">${escapeHtml(person.displayName)}</div>
+            <div class="teams-chips">
+              ${person.picks.map(p => `<span class="chip">${escapeHtml(p.team)}</span>`).join("")}
+            </div>
           </div>
-          <div class="team">${escapeHtml(entry.team)}</div>
+          <div class="team-count">${person.picks.length} × £${ENTRY_PRICE}</div>
         </div>
       `).join("");
     }
@@ -885,11 +1056,12 @@
       elements.personName.disabled = !adminUnlocked;
       elements.pickBtn.disabled = !adminUnlocked;
       elements.pickerLockNotice.style.display = adminUnlocked ? "none" : "grid";
-      elements.pickBtn.textContent = adminUnlocked ? "Pick Random Team" : "Locked";
+      elements.pickBtn.textContent = adminUnlocked ? "Pick Random Team (+£2)" : "Locked";
     }
 
     function renderAll() {
       renderStats();
+      renderPot();
       renderLeaderboard();
       renderBrackets();
       renderAdmin();
@@ -954,16 +1126,15 @@
       if (!name) return toast("Enter a name first.");
       if (!teams.length) return toast("No teams found. Add teams in Admin, then press Save Teams.");
 
-      const duplicate = entries.find(entry => entry.name.toLowerCase() === name.toLowerCase());
-      if (duplicate) return toast(`${name} already has ${duplicate.team}.`);
-
+      // Prefer un-picked teams, but allow re-picks if all are taken (so the sweepstake can keep growing).
       const available = getAvailableTeams();
-      if (!available.length) return toast("All teams have been picked. Reset entries or allow duplicates manually in Admin.");
+      const pool = available.length ? available : teams;
+      if (!pool.length) return toast("No teams to draw from.");
 
       elements.pickBtn.disabled = true;
       elements.pickBtn.textContent = "Picking...";
 
-      const chosen = available[Math.floor(Math.random() * available.length)];
+      const chosen = pool[Math.floor(Math.random() * pool.length)];
 
       try {
         runDrawAnimation(chosen.name, name);
@@ -977,13 +1148,14 @@
 
         elements.teamResult.innerHTML = `<span class="small">${escapeHtml(name)} picked</span><strong>${escapeHtml(chosen.name)}</strong>`;
         elements.personName.value = "";
-        toast(`${name} got ${chosen.name}.`);
+        const note = available.length ? "" : " (all teams were taken — duplicate allowed)";
+        toast(`${name} got ${chosen.name}. +£${ENTRY_PRICE} to the pot${note}.`);
       } catch (error) {
         console.error(error);
         toast(`Could not add pick: ${error.message}`);
       } finally {
         elements.pickBtn.disabled = false;
-        elements.pickBtn.textContent = "Pick Random Team";
+        elements.pickBtn.textContent = "Pick Random Team (+£2)";
       }
     }
 
@@ -1007,8 +1179,13 @@
 
       try {
         const teamData = {};
+        const usedIds = new Set();
         newTeams.forEach(team => {
-          const cleanId = team.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || crypto.randomUUID();
+          let cleanId = team.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+          if (!cleanId || usedIds.has(cleanId)) {
+            cleanId = (cleanId || "team") + "-" + Math.random().toString(36).slice(2, 7);
+          }
+          usedIds.add(cleanId);
           teamData[cleanId] = { ...team, createdAt: serverTimestamp() };
         });
 
@@ -1045,7 +1222,7 @@
         }), "Adding manual entry");
 
         elements.manualName.value = "";
-        toast("Manual entry added.");
+        toast(`Manual entry added. +£${ENTRY_PRICE} to the pot.`);
       } catch (error) {
         console.error(error);
         toast(`Could not add entry: ${error.message}`);
@@ -1061,6 +1238,7 @@
       const ok = confirm("Clear all World Cup picks? This cannot be undone.");
       if (!ok) return;
       await withTimeout(remove(entriesRef), "Clearing picks");
+      lastEntriesCount = 0;
       toast("All picks cleared.");
     }
 
@@ -1070,9 +1248,11 @@
         return;
       }
 
-      const rows = [["Name", "Team", "Group"]];
-      entries.forEach(entry => rows.push([entry.name, entry.team, entry.group || ""]));
-      const csv = rows.map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\n");
+      const rows = [["Name", "Team", "Group", "Entry Fee (£)"]];
+      entries.forEach(entry => rows.push([entry.name, entry.team, entry.group || "", ENTRY_PRICE]));
+      rows.push([]);
+      rows.push(["TOTAL POT", "", "", entries.length * ENTRY_PRICE]);
+      const csv = rows.map(row => row.map(cell => `"${String(cell ?? "").replaceAll('"', '""')}"`).join(",")).join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
