@@ -471,7 +471,9 @@
     }
 
     .chip {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       padding: 4px 10px;
       border-radius: 999px;
       background: rgba(255,209,102,0.18);
@@ -480,6 +482,20 @@
       font-size: 12px;
       font-weight: 800;
       letter-spacing: .3px;
+    }
+
+    .flag {
+      display: inline-block;
+      font-size: 1.1em;
+      line-height: 1;
+      margin-right: 6px;
+      vertical-align: -2px;
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", sans-serif;
+    }
+
+    .chip .flag {
+      margin-right: 0;
+      font-size: 1em;
     }
 
     .person-card .team-count {
@@ -539,7 +555,125 @@
     .badge.hot { background: var(--gold); color: #080808; }
     .badge.empty { background: rgba(255,255,255,0.06); color: var(--gxo-muted); }
 
-    /* FIXTURES */
+    /* TODAY'S MATCHES WIDGET */
+    .today-widget {
+      margin: 0 0 18px;
+      padding: 18px 22px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, rgba(25,195,125,0.18), rgba(255,255,255,0.045));
+      border: 1px solid rgba(25,195,125,0.35);
+      box-shadow: 0 18px 50px rgba(0,0,0,0.3);
+    }
+
+    .today-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .today-label {
+      font-family: Oswald, Inter, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--gxo-green);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .today-date {
+      font-family: Oswald, Inter, sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      line-height: 1.05;
+      margin-top: 2px;
+    }
+
+    .today-our-count {
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--gold);
+      color: #1a0c00;
+      font-weight: 950;
+      font-size: 12px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+
+    .today-our-count.zero {
+      background: rgba(255,255,255,0.08);
+      color: var(--gxo-muted);
+    }
+
+    .today-matches {
+      display: grid;
+      gap: 8px;
+    }
+
+    .today-match {
+      display: grid;
+      grid-template-columns: 64px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: rgba(0,0,0,0.28);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .today-match.has-pick {
+      background: linear-gradient(90deg, rgba(255,209,102,0.2), rgba(255,209,102,0.05));
+      border-color: rgba(255,209,102,0.45);
+    }
+
+    .today-match-time {
+      font-family: Oswald, Inter, sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+    }
+
+    .today-match-teams {
+      font-weight: 800;
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    .today-match-teams .picked {
+      color: var(--gold);
+    }
+
+    .today-match-meta {
+      font-size: 11px;
+      color: var(--gxo-muted);
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .today-pickers {
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--gxo-muted);
+      letter-spacing: .3px;
+    }
+
+    .today-pickers b { color: var(--gold); font-weight: 800; }
+
+    @media (max-width: 640px) {
+      .today-match {
+        grid-template-columns: 52px 1fr;
+        gap: 10px;
+        padding: 10px 12px;
+      }
+      .today-match-meta {
+        grid-column: 1 / -1;
+        text-align: right;
+      }
+    }
     .fixtures-list {
       display: grid;
       gap: 22px;
@@ -815,6 +949,17 @@
           </div>
         </div>
 
+        <div class="today-widget" id="todayWidget" style="display:none;">
+          <div class="today-header">
+            <div>
+              <div class="today-label">Today's matches</div>
+              <div class="today-date" id="todayDate"></div>
+            </div>
+            <div class="today-our-count" id="todayOurCount"></div>
+          </div>
+          <div class="today-matches" id="todayMatches"></div>
+        </div>
+
         <div class="grid">
           <div class="panel">
             <h2>Pick a Team</h2>
@@ -972,6 +1117,27 @@
 
     const ADMIN_PIN = "2026";
     const ENTRY_PRICE = 2; // £ per entry — change here if needed
+
+    // Flag emojis for each World Cup 2026 team
+    const TEAM_FLAGS = {
+      "Mexico": "🇲🇽", "South Africa": "🇿🇦", "Korea Republic": "🇰🇷", "South Korea": "🇰🇷", "Czechia": "🇨🇿", "Czech Republic": "🇨🇿",
+      "Canada": "🇨🇦", "Qatar": "🇶🇦", "Switzerland": "🇨🇭", "Bosnia and Herzegovina": "🇧🇦", "Bosnia & Herzegovina": "🇧🇦",
+      "Brazil": "🇧🇷", "Morocco": "🇲🇦", "Haiti": "🇭🇹", "Scotland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+      "USA": "🇺🇸", "Paraguay": "🇵🇾", "Australia": "🇦🇺", "Türkiye": "🇹🇷", "Turkey": "🇹🇷",
+      "Germany": "🇩🇪", "Curaçao": "🇨🇼", "Curacao": "🇨🇼", "Côte d'Ivoire": "🇨🇮", "Ivory Coast": "🇨🇮", "Ecuador": "🇪🇨",
+      "Netherlands": "🇳🇱", "Japan": "🇯🇵", "Sweden": "🇸🇪", "Tunisia": "🇹🇳",
+      "Belgium": "🇧🇪", "Egypt": "🇪🇬", "IR Iran": "🇮🇷", "Iran": "🇮🇷", "New Zealand": "🇳🇿",
+      "Spain": "🇪🇸", "Cabo Verde": "🇨🇻", "Cape Verde": "🇨🇻", "Saudi Arabia": "🇸🇦", "Uruguay": "🇺🇾",
+      "France": "🇫🇷", "Senegal": "🇸🇳", "Iraq": "🇮🇶", "Norway": "🇳🇴",
+      "Argentina": "🇦🇷", "Algeria": "🇩🇿", "Austria": "🇦🇹", "Jordan": "🇯🇴",
+      "Portugal": "🇵🇹", "Congo DR": "🇨🇩", "DR Congo": "🇨🇩", "Uzbekistan": "🇺🇿", "Colombia": "🇨🇴",
+      "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "Croatia": "🇭🇷", "Ghana": "🇬🇭", "Panama": "🇵🇦"
+    };
+
+    function flagFor(teamName) {
+      return TEAM_FLAGS[teamName] || "🏳️";
+    }
+
     let adminUnlocked = false;
 
     const DEFAULT_TEAMS = [
@@ -1053,6 +1219,10 @@
       availableTeams: $("#availableTeams"),
       potAmount: $("#potAmount"),
       potEntries: $("#potEntries"),
+      todayWidget: $("#todayWidget"),
+      todayDate: $("#todayDate"),
+      todayOurCount: $("#todayOurCount"),
+      todayMatches: $("#todayMatches"),
       adminPin: $("#adminPin"),
       loginBtn: $("#loginBtn"),
       pickerLockNotice: $("#pickerLockNotice"),
@@ -1167,7 +1337,7 @@
           <div>
             <div class="name">${escapeHtml(person.displayName)}</div>
             <div class="teams-chips">
-              ${person.picks.map(p => `<span class="chip">${escapeHtml(p.team)}</span>`).join("")}
+              ${person.picks.map(p => `<span class="chip"><span class="flag">${flagFor(p.team)}</span>${escapeHtml(p.team)}</span>`).join("")}
             </div>
           </div>
           <div class="team-count">${person.picks.length} × £${ENTRY_PRICE}</div>
@@ -1208,7 +1378,7 @@
       const badgeClass = count > 1 ? "hot" : count === 0 ? "empty" : "";
       return `
         <div class="team-line">
-          <span>${escapeHtml(team.name)}</span>
+          <span><span class="flag">${flagFor(team.name)}</span>${escapeHtml(team.name)}</span>
           <span class="badge ${badgeClass}">${count}</span>
         </div>
       `;
@@ -1258,6 +1428,7 @@
       renderBrackets();
       renderAdmin();
       renderAccessState();
+      renderToday();
       renderFixtures();
     }
 
@@ -1676,6 +1847,95 @@
 
     let fixtureFilter = "all"; // all | picked | group | knockout
 
+    function renderToday() {
+      const widget = elements.todayWidget;
+      if (!widget) return;
+
+      // Get today's date in YYYY-MM-DD (local time)
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+      const todayKey = `${yyyy}-${mm}-${dd}`;
+
+      const todays = FIXTURES.filter(f => f.date === todayKey);
+
+      // Hide the widget entirely outside the tournament window
+      if (!todays.length) {
+        widget.style.display = "none";
+        return;
+      }
+
+      widget.style.display = "block";
+
+      // Pretty date label
+      const prettyDate = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+      elements.todayDate.textContent = prettyDate;
+
+      // Map team -> array of pickers (case-preserving display names)
+      const pickersByTeam = {};
+      entries.forEach(entry => {
+        const norm = normaliseTeam(entry.team);
+        if (!pickersByTeam[norm]) pickersByTeam[norm] = [];
+        pickersByTeam[norm].push(entry.name);
+      });
+
+      const pickedTeams = new Set(Object.keys(pickersByTeam));
+
+      let ourCount = 0;
+      const html = todays.map(match => {
+        const homeN = normaliseTeam(match.home);
+        const awayN = normaliseTeam(match.away);
+        const homePicked = pickedTeams.has(homeN);
+        const awayPicked = pickedTeams.has(awayN);
+        const hasPick = match.stage === "group" && (homePicked || awayPicked);
+        if (hasPick) ourCount += 1;
+
+        const homeFlag = match.stage === "group" ? `<span class="flag">${flagFor(match.home)}</span>` : "";
+        const awayFlag = match.stage === "group" ? `<span class="flag">${flagFor(match.away)}</span>` : "";
+
+        const homeHtml = homePicked ? `<span class="picked">${homeFlag}${escapeHtml(match.home)}</span>` : `${homeFlag}${escapeHtml(match.home)}`;
+        const awayHtml = awayPicked ? `<span class="picked">${awayFlag}${escapeHtml(match.away)}</span>` : `${awayFlag}${escapeHtml(match.away)}`;
+
+        const matchup = match.stage === "group"
+          ? `${homeHtml} <span class="small">vs</span> ${awayHtml}`
+          : `<b>${escapeHtml(match.home)}</b> <span class="small">— ${escapeHtml(match.away)}</span>`;
+
+        // Show pickers if any
+        let pickersLine = "";
+        if (hasPick) {
+          const names = [];
+          if (homePicked) names.push(...pickersByTeam[homeN].map(n => `<b>${escapeHtml(n)}</b> (${escapeHtml(match.home)})`));
+          if (awayPicked) names.push(...pickersByTeam[awayN].map(n => `<b>${escapeHtml(n)}</b> (${escapeHtml(match.away)})`));
+          pickersLine = `<div class="today-pickers">${names.join(" · ")}</div>`;
+        }
+
+        const tag = match.stage === "group" && match.group ? `Group ${match.group}` : STAGE_LABELS[match.stage];
+
+        return `
+          <div class="today-match ${hasPick ? "has-pick" : ""}">
+            <div class="today-match-time">${escapeHtml(match.time)}</div>
+            <div>
+              <div class="today-match-teams">${matchup}</div>
+              ${pickersLine}
+            </div>
+            <div class="today-match-meta">${escapeHtml(tag)} · ${escapeHtml(match.venue)}</div>
+          </div>
+        `;
+      }).join("");
+
+      elements.todayMatches.innerHTML = html;
+
+      // Update "our games" badge
+      if (ourCount > 0) {
+        elements.todayOurCount.textContent = `${ourCount} of ours playing`;
+        elements.todayOurCount.classList.remove("zero");
+      } else {
+        elements.todayOurCount.textContent = "None of our teams";
+        elements.todayOurCount.classList.add("zero");
+      }
+    }
+
     function renderFixtures() {
       const list = document.getElementById("fixturesList");
       if (!list) return;
@@ -1723,8 +1983,11 @@
       const awayPicked = pickedTeams.has(awayN);
       const highlight = match.stage === "group" && (homePicked || awayPicked);
 
-      const homeHtml = homePicked ? `<span class="picked">${escapeHtml(match.home)}</span>` : escapeHtml(match.home);
-      const awayHtml = awayPicked ? `<span class="picked">${escapeHtml(match.away)}</span>` : escapeHtml(match.away);
+      const homeFlag = match.stage === "group" ? `<span class="flag">${flagFor(match.home)}</span>` : "";
+      const awayFlag = match.stage === "group" ? `<span class="flag">${flagFor(match.away)}</span>` : "";
+
+      const homeHtml = homePicked ? `<span class="picked">${homeFlag}${escapeHtml(match.home)}</span>` : `${homeFlag}${escapeHtml(match.home)}`;
+      const awayHtml = awayPicked ? `<span class="picked">${awayFlag}${escapeHtml(match.away)}</span>` : `${awayFlag}${escapeHtml(match.away)}`;
 
       const matchup = match.stage === "group"
         ? `${homeHtml} <span class="small">vs</span> ${awayHtml}`
@@ -1787,6 +2050,10 @@
     }
 
     boot();
+
+    // Refresh "Today's matches" every 10 minutes so it picks up date rollover
+    // without needing the user to reload the page.
+    setInterval(renderToday, 10 * 60 * 1000);
   </script>
 </body>
 </html>
