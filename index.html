@@ -758,7 +758,7 @@
       return Promise.race([
         promise,
         new Promise((_, reject) => {
-          setTimeout(() => reject(new Error(`${label} timed out. Check Firestore rules and internet connection.`)), ms);
+          setTimeout(() => reject(new Error(`${label} timed out. Check Realtime Database rules and internet connection.`)), ms);
         })
       ]);
     }
