@@ -539,6 +539,127 @@
     .badge.hot { background: var(--gold); color: #080808; }
     .badge.empty { background: rgba(255,255,255,0.06); color: var(--gxo-muted); }
 
+    /* FIXTURES */
+    .fixture-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+      margin: 18px 0 26px;
+    }
+
+    .fixture-card {
+      position: relative;
+      display: block;
+      padding: 20px 22px;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.13);
+      color: var(--gxo-white);
+      text-decoration: none;
+      transition: transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+      overflow: hidden;
+    }
+
+    .fixture-card:hover {
+      transform: translateY(-3px);
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,209,102,0.4);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+    }
+
+    .fixture-card.primary-link {
+      background: linear-gradient(135deg, rgba(255,90,0,0.35), rgba(255,209,102,0.15));
+      border-color: rgba(255,209,102,0.45);
+    }
+
+    .fixture-card.primary-link:hover {
+      background: linear-gradient(135deg, rgba(255,90,0,0.5), rgba(255,209,102,0.25));
+    }
+
+    .fixture-card-label {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: rgba(255,209,102,0.2);
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .fixture-card-title {
+      font-family: Oswald, Inter, sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      text-transform: uppercase;
+      line-height: 1.05;
+      margin-bottom: 6px;
+    }
+
+    .fixture-card-meta {
+      color: var(--gxo-muted);
+      font-size: 13px;
+      line-height: 1.4;
+      padding-right: 30px;
+    }
+
+    .fixture-card-arrow {
+      position: absolute;
+      top: 22px;
+      right: 20px;
+      font-size: 22px;
+      color: var(--gold);
+      transition: transform .2s ease;
+    }
+
+    .fixture-card:hover .fixture-card-arrow {
+      transform: translateX(4px);
+    }
+
+    .fixture-keydates {
+      padding: 20px 22px;
+      border-radius: 22px;
+      background: rgba(0,0,0,0.28);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .fixture-keydates h3 {
+      margin: 0 0 14px;
+      font-family: Oswald, Inter, sans-serif;
+      font-size: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--gold);
+    }
+
+    .keydates-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .keydates-grid > div {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .keydates-grid b {
+      display: block;
+      font-weight: 800;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .keydates-grid span {
+      color: var(--gxo-muted);
+      font-size: 13px;
+    }
+
     .admin-lock {
       max-width: 520px;
       margin: 30px auto;
@@ -631,6 +752,7 @@
       <nav class="tabs">
         <button class="tab active" data-page="pickerPage">Picker</button>
         <button class="tab" data-page="bracketPage">Team Brackets</button>
+        <button class="tab" data-page="fixturesPage">Fixtures</button>
         <button class="tab" data-page="adminPage">Admin</button>
       </nav>
     </header>
@@ -697,6 +819,55 @@
             <button id="sortCountBtn">Most Picked</button>
           </div>
           <div class="groups" id="groups"></div>
+        </div>
+      </section>
+
+      <section id="fixturesPage" class="page">
+        <div class="panel">
+          <h2>World Cup 2026 Fixtures</h2>
+          <p>The tournament runs from <b>11 June 2026</b> to <b>19 July 2026</b> across the USA, Canada and Mexico. All 104 matches with UK kick-off times, venues and live scores are kept up to date on Sky Sports and FIFA's official site. Click below to open them in a new tab.</p>
+
+          <div class="fixture-links">
+            <a class="fixture-card primary-link" href="https://www.skysports.com/football/news/11095/13481245/world-cup-2026-fixture-schedule-and-uk-kick-off-times-day-by-day-breakdown-of-all-104-matches-including-england-scotland" target="_blank" rel="noopener noreferrer">
+              <div class="fixture-card-label">Recommended · UK times</div>
+              <div class="fixture-card-title">Sky Sports — Full Schedule</div>
+              <div class="fixture-card-meta">Day-by-day breakdown of all 104 matches with UK kick-off times</div>
+              <div class="fixture-card-arrow">→</div>
+            </a>
+
+            <a class="fixture-card" href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/scores-fixtures" target="_blank" rel="noopener noreferrer">
+              <div class="fixture-card-label">Official</div>
+              <div class="fixture-card-title">FIFA — Scores &amp; Fixtures</div>
+              <div class="fixture-card-meta">Live scores, group standings, knockout bracket</div>
+              <div class="fixture-card-arrow">→</div>
+            </a>
+
+            <a class="fixture-card" href="https://www.skysports.com/world-cup-fixtures" target="_blank" rel="noopener noreferrer">
+              <div class="fixture-card-label">Live</div>
+              <div class="fixture-card-title">Sky Sports — Live Fixtures Hub</div>
+              <div class="fixture-card-meta">Today's matches, results and upcoming games</div>
+              <div class="fixture-card-arrow">→</div>
+            </a>
+
+            <a class="fixture-card" href="https://www.skysports.com/world-cup-table" target="_blank" rel="noopener noreferrer">
+              <div class="fixture-card-label">Standings</div>
+              <div class="fixture-card-title">Sky Sports — Group Tables</div>
+              <div class="fixture-card-meta">Live group standings as the tournament progresses</div>
+              <div class="fixture-card-arrow">→</div>
+            </a>
+          </div>
+
+          <div class="fixture-keydates">
+            <h3>Key dates</h3>
+            <div class="keydates-grid">
+              <div><b>Group stage</b><span>11 – 27 June</span></div>
+              <div><b>Round of 32</b><span>28 June – 3 July</span></div>
+              <div><b>Round of 16</b><span>4 – 7 July</span></div>
+              <div><b>Quarter-finals</b><span>9 – 11 July</span></div>
+              <div><b>Semi-finals</b><span>14 – 15 July</span></div>
+              <div><b>Final</b><span>19 July · MetLife Stadium</span></div>
+            </div>
+          </div>
         </div>
       </section>
 
