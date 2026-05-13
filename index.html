@@ -754,7 +754,16 @@
     function toast(message) {
       elements.toast.textContent = message;
       elements.toast.classList.add("show");
-      setTimeout(() => elements.toast.classList.remove("show"), 2800);
+      setTimeout(() => elements.toast.classList.remove("show"), 4500);
+    }
+
+    function withTimeout(promise, label = "Firebase request", ms = 9000) {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => {
+          setTimeout(() => reject(new Error(`${label} timed out. Check Firestore rules and internet connection.`)), ms);
+        })
+      ]);
     }
 
     function normalizeName(value) {
@@ -891,14 +900,14 @@
     }
 
     async function seedDefaultTeamsIfEmpty() {
-      const snap = await getDocs(teamsCol);
+      const snap = await withTimeout(getDocs(teamsCol), "Loading teams");
       if (!snap.empty) return;
       const batch = writeBatch(db);
       DEFAULT_TEAMS.forEach(team => {
         const id = team.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
         batch.set(doc(db, "worldcup_teams", id), { ...team, createdAt: serverTimestamp() });
       });
-      await batch.commit();
+      await withTimeout(batch.commit(), "Saving default teams");
     }
 
     function runDrawAnimation(finalTeamName, personName) {
@@ -996,13 +1005,13 @@
 
       try {
         const batch = writeBatch(db);
-        const oldSnap = await getDocs(teamsCol);
+        const oldSnap = await withTimeout(getDocs(teamsCol), "Reading old teams");
         oldSnap.forEach(docSnap => batch.delete(doc(db, "worldcup_teams", docSnap.id)));
         newTeams.forEach(team => {
           const cleanId = team.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || crypto.randomUUID();
           batch.set(doc(db, "worldcup_teams", cleanId), { ...team, createdAt: serverTimestamp() });
         });
-        await batch.commit();
+        await withTimeout(batch.commit(), "Saving teams");
         adminIsEditingTeams = false;
         toast("Teams saved. Picker is ready.");
       } catch (error) {
@@ -1050,10 +1059,10 @@
 
       const ok = confirm("Clear all World Cup picks? This cannot be undone.");
       if (!ok) return;
-      const snap = await getDocs(entriesCol);
+      const snap = await withTimeout(getDocs(entriesCol), "Loading entries");
       const batch = writeBatch(db);
       snap.forEach(docSnap => batch.delete(doc(db, "worldcup_entries", docSnap.id)));
-      await batch.commit();
+      await withTimeout(batch.commit(), "Clearing picks");
       toast("All picks cleared.");
     }
 
