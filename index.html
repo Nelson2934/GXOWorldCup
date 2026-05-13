@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GXO World Cup Picker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gxo-orange: #ff5a00;
+      --gxo-orange-2: #ff7a1a;
+      --gxo-black: #050505;
+      --gxo-charcoal: #111217;
+      --gxo-card: rgba(255, 255, 255, 0.08);
+      --gxo-card-strong: rgba(255, 255, 255, 0.13);
+      --gxo-white: #ffffff;
+      --gxo-muted: #b8bdc9;
+      --gxo-green: #19c37d;
+      --danger: #ff4d4d;
+      --gold: #ffd166;
+      --line: rgba(255, 255, 255, 0.14);
+      --shadow: 0 26px 80px rgba(0, 0, 0, 0.38);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--gxo-white);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(255, 90, 0, 0.42), transparent 24%),
+        radial-gradient(circle at 88% 16%, rgba(25, 195, 125, 0.26), transparent 22%),
+        radial-gradient(circle at 42% 92%, rgba(255, 209, 102, 0.17), transparent 26%),
+        linear-gradient(135deg, #050505 0%, #111217 52%, #1c1008 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 46px 46px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.1));
+      z-index: 0;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: min(1420px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 26px 0 42px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 22px;
+      padding: 22px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-mark {
+      width: 66px;
+      height: 66px;
+      border-radius: 20px;
+      display: grid;
+      place-items: center;
+      color: #000;
+      font-weight: 950;
+      letter-spacing: -2px;
+      font-size: 22px;
+      background: linear-gradient(135deg, var(--gxo-orange), var(--gold));
+      box-shadow: 0 14px 38px rgba(255, 90, 0, 0.42);
+    }
+
+    h1 {
+      margin: 0;
+      font-family: Oswald, Inter, sans-serif;
+      font-size: clamp(34px, 5vw, 74px);
+      line-height: 0.95;
+      letter-spacing: -1.5px;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: var(--gxo-muted);
+      font-size: 15px;
+      max-width: 740px;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      color: var(--gxo-white);
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 12px 17px;
+      font-weight: 800;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.15);
+      transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
+    }
+
+    button:hover { transform: translateY(-2px); background: rgba(255,255,255,0.18); }
+    button:active { transform: translateY(0); }
+
+    .tab.active, .primary {
+      background: linear-gradient(135deg, var(--gxo-orange), #ff2f00);
+      color: #fff;
+      box-shadow: 0 16px 34px rgba(255, 90, 0, 0.3);
+    }
+
+    .danger { background: linear-gradient(135deg, #ff4d4d, #b30000); }
+    .success { background: linear-gradient(135deg, #19c37d, #087f5b); }
+    .ghost { background: transparent; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+    }
+
+    .panel {
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(255,255,255,0.11), rgba(255,255,255,0.045));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      padding: 22px;
+      min-width: 0;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-family: Oswald, Inter, sans-serif;
+      font-size: 32px;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+    }
+
+    .panel p { color: var(--gxo-muted); margin-top: 0; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border-radius: 18px;
+      padding: 14px 15px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(0,0,0,0.28);
+      color: var(--gxo-white);
+      outline: none;
+    }
+
+    textarea { min-height: 160px; resize: vertical; }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--gxo-orange);
+      box-shadow: 0 0 0 4px rgba(255,90,0,0.18);
+    }
+
+    .pick-stage {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 360px;
+      overflow: hidden;
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background:
+        radial-gradient(circle at center, rgba(255, 90, 0, 0.19), transparent 34%),
+        linear-gradient(145deg, rgba(0,0,0,0.45), rgba(255,255,255,0.04));
+    }
+
+    .ball {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+      color: #070707;
+      background:
+        radial-gradient(circle at 34% 28%, #fff 0 12%, transparent 13%),
+        conic-gradient(from 20deg, #fff 0 10%, #111 10% 18%, #fff 18% 31%, #111 31% 42%, #fff 42% 57%, #111 57% 68%, #fff 68% 82%, #111 82% 92%, #fff 92% 100%);
+      box-shadow: inset 0 -24px 50px rgba(0,0,0,0.22), 0 30px 80px rgba(0,0,0,0.5);
+      animation: floaty 3.2s ease-in-out infinite;
+    }
+
+    @keyframes floaty {
+      0%, 100% { transform: translateY(0) rotate(-3deg); }
+      50% { transform: translateY(-14px) rotate(3deg); }
+    }
+
+    .team-result {
+      position: absolute;
+      inset: auto 22px 22px;
+      padding: 18px;
+      border-radius: 22px;
+      background: rgba(0,0,0,0.58);
+      border: 1px solid rgba(255,255,255,0.16);
+      text-align: center;
+    }
+
+    .team-result strong {
+      display: block;
+      font-size: clamp(28px, 5vw, 54px);
+      font-family: Oswald, Inter, sans-serif;
+      color: var(--gold);
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .stat {
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .stat span { display: block; color: var(--gxo-muted); font-size: 12px; text-transform: uppercase; letter-spacing: .9px; }
+    .stat b { display: block; margin-top: 6px; font-size: 28px; }
+
+    .leaderboard, .entries-list {
+      display: grid;
+      gap: 10px;
+      max-height: 620px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .entry-card {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.075);
+      border: 1px solid rgba(255,255,255,0.11);
+    }
+
+    .entry-card .name { font-weight: 900; }
+    .entry-card .team { color: var(--gold); font-weight: 900; }
+    .small { color: var(--gxo-muted); font-size: 12px; }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .groups {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .group-card {
+      border-radius: 22px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.13);
+      background: rgba(255,255,255,0.07);
+    }
+
+    .group-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 15px;
+      background: linear-gradient(135deg, rgba(255,90,0,0.95), rgba(255,90,0,0.52));
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .team-line {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 15px;
+      border-top: 1px solid rgba(255,255,255,0.09);
+    }
+
+    .badge {
+      min-width: 34px;
+      height: 30px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      font-weight: 950;
+    }
+
+    .badge.hot { background: var(--gold); color: #080808; }
+    .badge.empty { background: rgba(255,255,255,0.06); color: var(--gxo-muted); }
+
+    .admin-lock {
+      max-width: 520px;
+      margin: 30px auto;
+    }
+
+    .admin-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 12px 0 18px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 10;
+      max-width: 420px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: #111;
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: var(--shadow);
+      transform: translateY(120%);
+      transition: transform .25s ease;
+    }
+
+    .toast.show { transform: translateY(0); }
+
+    .football-strip {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      opacity: .9;
+    }
+
+    .football-strip i {
+      display: block;
+      height: 8px;
+      flex: 1;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--gxo-orange), var(--gold));
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--gxo-muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    @media (max-width: 1050px) {
+      header, .grid, .admin-grid { grid-template-columns: 1fr; }
+      .tabs { justify-content: flex-start; }
+      .groups { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 640px) {
+      .app { width: min(100% - 18px, 1420px); padding-top: 10px; }
+      header, .panel { padding: 16px; border-radius: 20px; }
+      .brand { align-items: flex-start; }
+      .logo-mark { width: 54px; height: 54px; border-radius: 16px; font-size: 18px; }
+      .form-row { grid-template-columns: 1fr; }
+      .groups, .stat-row { grid-template-columns: 1fr; }
+      .pick-stage { min-height: 310px; }
+      .ball { width: 180px; height: 180px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="logo-mark">GXO</div>
+        <div>
+          <h1>World Cup Picker</h1>
+          <div class="subtitle">A live office sweepstake board. Add a name, press pick, and the app randomly assigns a team from the admin team list.</div>
+          <div class="football-strip"><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+      </div>
+      <nav class="tabs">
+        <button class="tab active" data-page="pickerPage">Picker</button>
+        <button class="tab" data-page="bracketPage">Team Brackets</button>
+        <button class="tab" data-page="adminPage">Admin</button>
+      </nav>
+    </header>
+
+    <main>
+      <section id="pickerPage" class="page active">
+        <div class="grid">
+          <div class="panel">
+            <h2>Pick a Team</h2>
+            <p>Enter the colleague name, then hit the button. The football oracle will do the chaos politely.</p>
+            <div class="form-row">
+              <input id="personName" placeholder="Enter name, e.g. James Nelson" autocomplete="off" />
+              <button class="primary" id="pickBtn">Pick Random Team</button>
+            </div>
+            <div class="pick-stage">
+              <div class="ball"><strong>Press<br>Pick</strong></div>
+              <div class="team-result" id="teamResult">
+                <span class="small">Waiting for the next draw</span>
+                <strong>---</strong>
+              </div>
+            </div>
+            <div class="stat-row">
+              <div class="stat"><span>Total Picks</span><b id="totalPicks">0</b></div>
+              <div class="stat"><span>Teams Used</span><b id="teamsUsed">0</b></div>
+              <div class="stat"><span>Available Teams</span><b id="availableTeams">0</b></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>Live Board</h2>
+            <p>Everyone who has entered the sweepstake appears here instantly.</p>
+            <div class="leaderboard" id="leaderboard"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="bracketPage" class="page">
+        <div class="panel">
+          <h2>Team Brackets</h2>
+          <p>Grouped by World Cup group. The number next to each team shows how many people currently have that team.</p>
+          <div class="toolbar">
+            <button class="primary" id="sortGroupBtn">Group View</button>
+            <button id="sortCountBtn">Most Picked</button>
+          </div>
+          <div class="groups" id="groups"></div>
+        </div>
+      </section>
+
+      <section id="adminPage" class="page">
+        <div id="adminLock" class="panel admin-lock">
+          <h2>Admin Login</h2>
+          <p>Enter the admin PIN to manage teams and entries. Change the PIN inside the code before putting this live.</p>
+          <div class="form-row">
+            <input id="adminPin" type="password" placeholder="Admin PIN" />
+            <button class="primary" id="loginBtn">Unlock</button>
+          </div>
+        </div>
+
+        <div id="adminContent" style="display:none;">
+          <div class="admin-grid">
+            <div class="panel">
+              <h2>Team Setup</h2>
+              <p>One team per line. Use “Group | Team”, for example: Group A | England. Save will replace the current team list.</p>
+              <textarea id="teamsInput"></textarea>
+              <div class="toolbar">
+                <button class="primary" id="saveTeamsBtn">Save Teams</button>
+                <button id="loadDefaultBtn">Load 2026 Groups</button>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h2>Manual Entry</h2>
+              <p>Use this if someone needs adding manually or you want to assign a specific team.</p>
+              <input id="manualName" placeholder="Name" style="margin-bottom:10px;" />
+              <select id="manualTeam" style="margin-bottom:10px;"></select>
+              <div class="toolbar">
+                <button class="success" id="manualAddBtn">Add Entry</button>
+              </div>
+              <h2 style="margin-top:22px;">Admin Actions</h2>
+              <div class="toolbar">
+                <button class="danger" id="clearEntriesBtn">Clear All Picks</button>
+                <button class="ghost" id="exportCsvBtn">Export CSV</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top:18px;">
+            <h2>Manage Entries</h2>
+            <div class="entries-list" id="adminEntries"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="footer-note">Built for GXO teams. Frontend: GitHub/Vercel. Backend: Firebase Firestore.</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      doc,
+      addDoc,
+      setDoc,
+      deleteDoc,
+      getDocs,
+      onSnapshot,
+      serverTimestamp,
+      query,
+      orderBy,
+      writeBatch
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBa_jskIfzTq1p3tfDihKcw2PIdnbqHUeg",
+      authDomain: "worldcup-7b648.firebaseapp.com",
+      projectId: "worldcup-7b648",
+      storageBucket: "worldcup-7b648.firebasestorage.app",
+      messagingSenderId: "594251153437",
+      appId: "1:594251153437:web:782b7c8808f63c269d46f4"
+    };
+
+    const ADMIN_PIN = "2026";
+
+    const DEFAULT_TEAMS = [
+      { group: "Group A", name: "Mexico" },
+      { group: "Group A", name: "South Africa" },
+      { group: "Group A", name: "Korea Republic" },
+      { group: "Group A", name: "Czechia" },
+      { group: "Group B", name: "Canada" },
+      { group: "Group B", name: "Qatar" },
+      { group: "Group B", name: "Switzerland" },
+      { group: "Group B", name: "Bosnia and Herzegovina" },
+      { group: "Group C", name: "Brazil" },
+      { group: "Group C", name: "Morocco" },
+      { group: "Group C", name: "Haiti" },
+      { group: "Group C", name: "Scotland" },
+      { group: "Group D", name: "USA" },
+      { group: "Group D", name: "Paraguay" },
+      { group: "Group D", name: "Australia" },
+      { group: "Group D", name: "Türkiye" },
+      { group: "Group E", name: "Germany" },
+      { group: "Group E", name: "Curaçao" },
+      { group: "Group E", name: "Côte d'Ivoire" },
+      { group: "Group E", name: "Ecuador" },
+      { group: "Group F", name: "Netherlands" },
+      { group: "Group F", name: "Japan" },
+      { group: "Group F", name: "Sweden" },
+      { group: "Group F", name: "Tunisia" },
+      { group: "Group G", name: "Belgium" },
+      { group: "Group G", name: "Egypt" },
+      { group: "Group G", name: "IR Iran" },
+      { group: "Group G", name: "New Zealand" },
+      { group: "Group H", name: "Spain" },
+      { group: "Group H", name: "Cabo Verde" },
+      { group: "Group H", name: "Saudi Arabia" },
+      { group: "Group H", name: "Uruguay" },
+      { group: "Group I", name: "France" },
+      { group: "Group I", name: "Senegal" },
+      { group: "Group I", name: "Iraq" },
+      { group: "Group I", name: "Norway" },
+      { group: "Group J", name: "Argentina" },
+      { group: "Group J", name: "Algeria" },
+      { group: "Group J", name: "Austria" },
+      { group: "Group J", name: "Jordan" },
+      { group: "Group K", name: "Portugal" },
+      { group: "Group K", name: "Congo DR" },
+      { group: "Group K", name: "Uzbekistan" },
+      { group: "Group K", name: "Colombia" },
+      { group: "Group L", name: "England" },
+      { group: "Group L", name: "Croatia" },
+      { group: "Group L", name: "Ghana" },
+      { group: "Group L", name: "Panama" }
+    ];
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const teamsCol = collection(db, "worldcup_teams");
+    const entriesCol = collection(db, "worldcup_entries");
+
+    let teams = [];
+    let entries = [];
+    let bracketMode = "group";
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => [...document.querySelectorAll(selector)];
+
+    const elements = {
+      personName: $("#personName"),
+      pickBtn: $("#pickBtn"),
+      teamResult: $("#teamResult"),
+      leaderboard: $("#leaderboard"),
+      groups: $("#groups"),
+      totalPicks: $("#totalPicks"),
+      teamsUsed: $("#teamsUsed"),
+      availableTeams: $("#availableTeams"),
+      adminPin: $("#adminPin"),
+      loginBtn: $("#loginBtn"),
+      adminLock: $("#adminLock"),
+      adminContent: $("#adminContent"),
+      teamsInput: $("#teamsInput"),
+      saveTeamsBtn: $("#saveTeamsBtn"),
+      loadDefaultBtn: $("#loadDefaultBtn"),
+      manualName: $("#manualName"),
+      manualTeam: $("#manualTeam"),
+      manualAddBtn: $("#manualAddBtn"),
+      clearEntriesBtn: $("#clearEntriesBtn"),
+      exportCsvBtn: $("#exportCsvBtn"),
+      adminEntries: $("#adminEntries"),
+      sortGroupBtn: $("#sortGroupBtn"),
+      sortCountBtn: $("#sortCountBtn"),
+      toast: $("#toast")
+    };
+
+    function toast(message) {
+      elements.toast.textContent = message;
+      elements.toast.classList.add("show");
+      setTimeout(() => elements.toast.classList.remove("show"), 2800);
+    }
+
+    function normalizeName(value) {
+      return String(value || "").trim().replace(/\s+/g, " ");
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function countByTeam() {
+      return entries.reduce((acc, entry) => {
+        acc[entry.team] = (acc[entry.team] || 0) + 1;
+        return acc;
+      }, {});
+    }
+
+    function getAvailableTeams() {
+      const picked = new Set(entries.map(entry => entry.team));
+      return teams.filter(team => !picked.has(team.name));
+    }
+
+    function renderStats() {
+      const used = new Set(entries.map(entry => entry.team));
+      elements.totalPicks.textContent = entries.length;
+      elements.teamsUsed.textContent = used.size;
+      elements.availableTeams.textContent = getAvailableTeams().length;
+    }
+
+    function renderLeaderboard() {
+      if (!entries.length) {
+        elements.leaderboard.innerHTML = `<div class="entry-card"><div><div class="name">No picks yet</div><div class="small">The board is waiting for its first brave soul.</div></div></div>`;
+        return;
+      }
+
+      elements.leaderboard.innerHTML = entries.map(entry => `
+        <div class="entry-card">
+          <div>
+            <div class="name">${escapeHtml(entry.name)}</div>
+            <div class="small">${escapeHtml(entry.group || "No group")}</div>
+          </div>
+          <div class="team">${escapeHtml(entry.team)}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderBrackets() {
+      const counts = countByTeam();
+      const sortedTeams = [...teams];
+
+      if (bracketMode === "count") {
+        sortedTeams.sort((a, b) => (counts[b.name] || 0) - (counts[a.name] || 0) || a.name.localeCompare(b.name));
+        elements.groups.innerHTML = `
+          <div class="group-card" style="grid-column:1/-1;">
+            <div class="group-title"><span>Most Picked</span><span>${entries.length} total</span></div>
+            ${sortedTeams.map(team => teamLine(team, counts[team.name] || 0)).join("")}
+          </div>
+        `;
+        return;
+      }
+
+      const grouped = sortedTeams.reduce((acc, team) => {
+        acc[team.group] = acc[team.group] || [];
+        acc[team.group].push(team);
+        return acc;
+      }, {});
+
+      elements.groups.innerHTML = Object.entries(grouped).map(([group, groupTeams]) => `
+        <div class="group-card">
+          <div class="group-title"><span>${escapeHtml(group)}</span><span>${groupTeams.length}</span></div>
+          ${groupTeams.map(team => teamLine(team, counts[team.name] || 0)).join("")}
+        </div>
+      `).join("");
+    }
+
+    function teamLine(team, count) {
+      const badgeClass = count > 1 ? "hot" : count === 0 ? "empty" : "";
+      return `
+        <div class="team-line">
+          <span>${escapeHtml(team.name)}</span>
+          <span class="badge ${badgeClass}">${count}</span>
+        </div>
+      `;
+    }
+
+    function renderAdmin() {
+      elements.teamsInput.value = teams.map(team => `${team.group} | ${team.name}`).join("\n");
+      elements.manualTeam.innerHTML = teams.map(team => `<option value="${escapeHtml(team.name)}">${escapeHtml(team.group)} | ${escapeHtml(team.name)}</option>`).join("");
+
+      if (!entries.length) {
+        elements.adminEntries.innerHTML = `<div class="entry-card"><div><div class="name">No entries to manage</div><div class="small">Once picks are made, they will appear here.</div></div></div>`;
+        return;
+      }
+
+      elements.adminEntries.innerHTML = entries.map(entry => `
+        <div class="entry-card">
+          <div>
+            <div class="name">${escapeHtml(entry.name)}</div>
+            <div class="small">${escapeHtml(entry.group || "No group")} | ${escapeHtml(entry.team)}</div>
+          </div>
+          <button class="danger" data-delete-entry="${entry.id}">Delete</button>
+        </div>
+      `).join("");
+
+      $$('[data-delete-entry]').forEach(button => {
+        button.addEventListener("click", async () => {
+          await deleteDoc(doc(db, "worldcup_entries", button.dataset.deleteEntry));
+          toast("Entry deleted.");
+        });
+      });
+    }
+
+    function renderAll() {
+      renderStats();
+      renderLeaderboard();
+      renderBrackets();
+      renderAdmin();
+    }
+
+    async function seedDefaultTeamsIfEmpty() {
+      const snap = await getDocs(teamsCol);
+      if (!snap.empty) return;
+      const batch = writeBatch(db);
+      DEFAULT_TEAMS.forEach(team => {
+        const id = team.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+        batch.set(doc(db, "worldcup_teams", id), { ...team, createdAt: serverTimestamp() });
+      });
+      await batch.commit();
+    }
+
+    async function pickRandomTeam() {
+      const name = normalizeName(elements.personName.value);
+      if (!name) return toast("Enter a name first.");
+      if (!teams.length) return toast("No teams found. Add teams in Admin.");
+
+      const duplicate = entries.find(entry => entry.name.toLowerCase() === name.toLowerCase());
+      if (duplicate) return toast(`${name} already has ${duplicate.team}.`);
+
+      const available = getAvailableTeams();
+      if (!available.length) return toast("All teams have been picked. Reset entries or allow duplicates manually in Admin.");
+
+      elements.pickBtn.disabled = true;
+      elements.pickBtn.textContent = "Picking...";
+
+      const chosen = available[Math.floor(Math.random() * available.length)];
+      await addDoc(entriesCol, {
+        name,
+        team: chosen.name,
+        group: chosen.group,
+        createdAt: serverTimestamp()
+      });
+
+      elements.teamResult.innerHTML = `<span class="small">${escapeHtml(name)} picked</span><strong>${escapeHtml(chosen.name)}</strong>`;
+      elements.personName.value = "";
+      elements.pickBtn.disabled = false;
+      elements.pickBtn.textContent = "Pick Random Team";
+      toast(`${name} got ${chosen.name}.`);
+    }
+
+    function parseTeamsInput(value) {
+      return value.split("\n")
+        .map(line => line.trim())
+        .filter(Boolean)
+        .map(line => {
+          const parts = line.split("|").map(part => part.trim()).filter(Boolean);
+          if (parts.length >= 2) return { group: parts[0], name: parts.slice(1).join(" | ") };
+          return { group: "Ungrouped", name: parts[0] || line };
+        });
+    }
+
+    async function replaceTeams(newTeams) {
+      if (!newTeams.length) return toast("Add at least one team.");
+      const batch = writeBatch(db);
+      const oldSnap = await getDocs(teamsCol);
+      oldSnap.forEach(docSnap => batch.delete(doc(db, "worldcup_teams", docSnap.id)));
+      newTeams.forEach(team => {
+        const id = team.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || crypto.randomUUID();
+        batch.set(doc(db, "worldcup_teams", id), { ...team, createdAt: serverTimestamp() });
+      });
+      await batch.commit();
+      toast("Teams saved.");
+    }
+
+    async function addManualEntry() {
+      const name = normalizeName(elements.manualName.value);
+      const selectedName = elements.manualTeam.value;
+      const selectedTeam = teams.find(team => team.name === selectedName);
+      if (!name || !selectedTeam) return toast("Add a name and select a team.");
+
+      await addDoc(entriesCol, {
+        name,
+        team: selectedTeam.name,
+        group: selectedTeam.group,
+        createdAt: serverTimestamp(),
+        manual: true
+      });
+
+      elements.manualName.value = "";
+      toast("Manual entry added.");
+    }
+
+    async function clearEntries() {
+      const ok = confirm("Clear all World Cup picks? This cannot be undone.");
+      if (!ok) return;
+      const snap = await getDocs(entriesCol);
+      const batch = writeBatch(db);
+      snap.forEach(docSnap => batch.delete(doc(db, "worldcup_entries", docSnap.id)));
+      await batch.commit();
+      toast("All picks cleared.");
+    }
+
+    function exportCsv() {
+      const rows = [["Name", "Team", "Group"]];
+      entries.forEach(entry => rows.push([entry.name, entry.team, entry.group || ""]));
+      const csv = rows.map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "gxo-world-cup-picks.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    $$(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        $$(".tab").forEach(item => item.classList.remove("active"));
+        $$(".page").forEach(page => page.classList.remove("active"));
+        tab.classList.add("active");
+        $("#" + tab.dataset.page).classList.add("active");
+      });
+    });
+
+    elements.pickBtn.addEventListener("click", pickRandomTeam);
+    elements.personName.addEventListener("keydown", event => {
+      if (event.key === "Enter") pickRandomTeam();
+    });
+
+    elements.loginBtn.addEventListener("click", () => {
+      if (elements.adminPin.value === ADMIN_PIN) {
+        elements.adminLock.style.display = "none";
+        elements.adminContent.style.display = "block";
+        toast("Admin unlocked.");
+      } else {
+        toast("Wrong PIN.");
+      }
+    });
+
+    elements.saveTeamsBtn.addEventListener("click", () => replaceTeams(parseTeamsInput(elements.teamsInput.value)));
+    elements.loadDefaultBtn.addEventListener("click", () => {
+      elements.teamsInput.value = DEFAULT_TEAMS.map(team => `${team.group} | ${team.name}`).join("\n");
+      toast("Default 2026 teams loaded into the editor. Press Save Teams to apply.");
+    });
+    elements.manualAddBtn.addEventListener("click", addManualEntry);
+    elements.clearEntriesBtn.addEventListener("click", clearEntries);
+    elements.exportCsvBtn.addEventListener("click", exportCsv);
+
+    elements.sortGroupBtn.addEventListener("click", () => {
+      bracketMode = "group";
+      elements.sortGroupBtn.classList.add("primary");
+      elements.sortCountBtn.classList.remove("primary");
+      renderBrackets();
+    });
+
+    elements.sortCountBtn.addEventListener("click", () => {
+      bracketMode = "count";
+      elements.sortCountBtn.classList.add("primary");
+      elements.sortGroupBtn.classList.remove("primary");
+      renderBrackets();
+    });
+
+    async function boot() {
+      try {
+        await seedDefaultTeamsIfEmpty();
+
+        onSnapshot(query(teamsCol, orderBy("group")), snapshot => {
+          teams = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
+            .sort((a, b) => String(a.group).localeCompare(String(b.group), undefined, { numeric: true }) || String(a.name).localeCompare(String(b.name)));
+          renderAll();
+        });
+
+        onSnapshot(query(entriesCol, orderBy("createdAt", "desc")), snapshot => {
+          entries = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+          renderAll();
+        });
+      } catch (error) {
+        console.error(error);
+        toast("Firebase error. Check Firestore is enabled and rules allow reads/writes.");
+      }
+    }
+
+    boot();
+  </script>
+</body>
+</html>
