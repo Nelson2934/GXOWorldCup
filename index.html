@@ -671,10 +671,7 @@
                 </div>
                 <div class="confetti" id="confetti"></div>
               </div>
-              <div class="team-result" id="teamResult">
-                <span class="small">Last pick will show here</span>
-                <strong>---</strong>
-              </div>
+
             </div>
             <div class="stat-row">
               <div class="stat"><span>Total Picks</span><b id="totalPicks">0</b></div>
@@ -850,7 +847,6 @@
     const elements = {
       personName: $("#personName"),
       pickBtn: $("#pickBtn"),
-      teamResult: $("#teamResult"),
       slotLabel: $("#slotLabel"),
       slotName: $("#slotName"),
       confetti: $("#confetti"),
@@ -1146,7 +1142,6 @@
           createdAt: serverTimestamp()
         }), "Adding pick");
 
-        elements.teamResult.innerHTML = `<span class="small">${escapeHtml(name)} picked</span><strong>${escapeHtml(chosen.name)}</strong>`;
         elements.personName.value = "";
         const note = available.length ? "" : " (all teams were taken — duplicate allowed)";
         toast(`${name} got ${chosen.name}. +£${ENTRY_PRICE} to the pot${note}.`);
