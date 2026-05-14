@@ -40,6 +40,39 @@
       overflow-x: hidden;
     }
 
+    /* Looping football video background */
+    .bg-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: -2;
+      opacity: 0.35;
+      filter: saturate(0.85) contrast(1.05);
+      pointer-events: none;
+    }
+
+    /* Heavy dim/tint over the video so text stays readable */
+    .bg-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(255, 90, 0, 0.55), transparent 28%),
+        radial-gradient(circle at 88% 16%, rgba(25, 195, 125, 0.3), transparent 24%),
+        radial-gradient(circle at 42% 92%, rgba(255, 209, 102, 0.22), transparent 28%),
+        linear-gradient(135deg, rgba(5,5,5,0.72) 0%, rgba(17,18,23,0.78) 52%, rgba(28,16,8,0.78) 100%);
+    }
+
+    /* Disable video background on phones/older devices to save battery */
+    @media (max-width: 640px), (prefers-reduced-motion: reduce) {
+      .bg-video { display: none; }
+      .bg-overlay { display: none; }
+    }
+
     body::before {
       content: "";
       position: fixed;
@@ -486,16 +519,28 @@
 
     .flag {
       display: inline-block;
-      font-size: 1.1em;
-      line-height: 1;
-      margin-right: 6px;
+      height: 14px;
+      width: auto;
       vertical-align: -2px;
-      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", sans-serif;
+      margin-right: 7px;
+      border-radius: 2px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.08);
+      object-fit: cover;
     }
 
     .chip .flag {
-      margin-right: 0;
-      font-size: 1em;
+      height: 12px;
+      margin-right: 6px;
+    }
+
+    .fixture-matchup .flag,
+    .today-match-teams .flag {
+      height: 16px;
+      margin-right: 8px;
+    }
+
+    .group-card .team-line .flag {
+      height: 14px;
     }
 
     .person-card .team-count {
@@ -554,6 +599,34 @@
 
     .badge.hot { background: var(--gold); color: #080808; }
     .badge.empty { background: rgba(255,255,255,0.06); color: var(--gxo-muted); }
+
+    .lock-banner {
+      margin: 0 0 16px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 700;
+      display: none;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .lock-banner.show { display: flex; }
+
+    .lock-banner.countdown {
+      background: rgba(25, 195, 125, 0.15);
+      border: 1px solid rgba(25, 195, 125, 0.4);
+      color: var(--gxo-green);
+    }
+
+    .lock-banner.locked {
+      background: linear-gradient(90deg, rgba(255, 77, 77, 0.25), rgba(255, 77, 77, 0.08));
+      border: 1px solid rgba(255, 77, 77, 0.5);
+      color: #ff8a8a;
+    }
+
+    .lock-banner .lock-icon { font-size: 18px; }
+    .lock-banner b { color: var(--gxo-white); }
 
     /* TODAY'S MATCHES WIDGET */
     .today-widget {
@@ -917,6 +990,19 @@
   </style>
 </head>
 <body>
+  <!--
+    Background video.
+    To change the clip: download an .mp4 from pexels.com/videos or coverr.co,
+    drop it into your repo (alongside index.html), and update the src below to
+    something like "/your-clip.mp4". The CSS gradient overlay sits on top of
+    it, so almost any football clip will look good. If the video fails to load
+    the gradient background takes over and the page still looks great.
+  -->
+  <video class="bg-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+    <source src="https://cdn.coverr.co/videos/coverr-aerial-view-of-a-soccer-field-1572/1080p.mp4" type="video/mp4">
+  </video>
+  <div class="bg-overlay" aria-hidden="true"></div>
+
   <div class="app">
     <header>
       <div class="brand">
@@ -974,6 +1060,7 @@
               <input id="personName" placeholder="Enter name, e.g. James Nelson" autocomplete="off" disabled />
               <button class="primary" id="pickBtn" disabled>Pick Random Team</button>
             </div>
+            <div id="lockBanner" class="lock-banner"></div>
             <div class="pick-stage">
               <div class="draw-machine">
                 <div class="slot-window">
@@ -1115,27 +1202,39 @@
       appId: "1:594251153437:web:782b7c8808f63c269d46f4"
     };
 
-    const ADMIN_PIN = "2026";
+    // Admin PIN is stored as a SHA-256 hash so the actual value isn't visible
+    // when someone opens DevTools. To change it, run in any browser console:
+    //   crypto.subtle.digest("SHA-256", new TextEncoder().encode("YOUR_NEW_PIN"))
+    //     .then(b => console.log([...new Uint8Array(b)].map(x => x.toString(16).padStart(2,"0")).join("")));
+    const ADMIN_PIN_HASH = "22d7b91d081c65de3c1bcdde849d627f21cf4d3017523655c388331f1494dc18";
+
+    async function hashPin(pin) {
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pin));
+      return [...new Uint8Array(buf)].map(x => x.toString(16).padStart(2, "0")).join("");
+    }
     const ENTRY_PRICE = 2; // £ per entry — change here if needed
 
-    // Flag emojis for each World Cup 2026 team
+    // ISO 3166-1 alpha-2 codes for each World Cup 2026 team (gb-eng / gb-sct for subdivisions)
     const TEAM_FLAGS = {
-      "Mexico": "🇲🇽", "South Africa": "🇿🇦", "Korea Republic": "🇰🇷", "South Korea": "🇰🇷", "Czechia": "🇨🇿", "Czech Republic": "🇨🇿",
-      "Canada": "🇨🇦", "Qatar": "🇶🇦", "Switzerland": "🇨🇭", "Bosnia and Herzegovina": "🇧🇦", "Bosnia & Herzegovina": "🇧🇦",
-      "Brazil": "🇧🇷", "Morocco": "🇲🇦", "Haiti": "🇭🇹", "Scotland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
-      "USA": "🇺🇸", "Paraguay": "🇵🇾", "Australia": "🇦🇺", "Türkiye": "🇹🇷", "Turkey": "🇹🇷",
-      "Germany": "🇩🇪", "Curaçao": "🇨🇼", "Curacao": "🇨🇼", "Côte d'Ivoire": "🇨🇮", "Ivory Coast": "🇨🇮", "Ecuador": "🇪🇨",
-      "Netherlands": "🇳🇱", "Japan": "🇯🇵", "Sweden": "🇸🇪", "Tunisia": "🇹🇳",
-      "Belgium": "🇧🇪", "Egypt": "🇪🇬", "IR Iran": "🇮🇷", "Iran": "🇮🇷", "New Zealand": "🇳🇿",
-      "Spain": "🇪🇸", "Cabo Verde": "🇨🇻", "Cape Verde": "🇨🇻", "Saudi Arabia": "🇸🇦", "Uruguay": "🇺🇾",
-      "France": "🇫🇷", "Senegal": "🇸🇳", "Iraq": "🇮🇶", "Norway": "🇳🇴",
-      "Argentina": "🇦🇷", "Algeria": "🇩🇿", "Austria": "🇦🇹", "Jordan": "🇯🇴",
-      "Portugal": "🇵🇹", "Congo DR": "🇨🇩", "DR Congo": "🇨🇩", "Uzbekistan": "🇺🇿", "Colombia": "🇨🇴",
-      "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "Croatia": "🇭🇷", "Ghana": "🇬🇭", "Panama": "🇵🇦"
+      "Mexico": "mx", "South Africa": "za", "Korea Republic": "kr", "South Korea": "kr", "Czechia": "cz", "Czech Republic": "cz",
+      "Canada": "ca", "Qatar": "qa", "Switzerland": "ch", "Bosnia and Herzegovina": "ba", "Bosnia & Herzegovina": "ba",
+      "Brazil": "br", "Morocco": "ma", "Haiti": "ht", "Scotland": "gb-sct",
+      "USA": "us", "Paraguay": "py", "Australia": "au", "Türkiye": "tr", "Turkey": "tr",
+      "Germany": "de", "Curaçao": "cw", "Curacao": "cw", "Côte d'Ivoire": "ci", "Ivory Coast": "ci", "Ecuador": "ec",
+      "Netherlands": "nl", "Japan": "jp", "Sweden": "se", "Tunisia": "tn",
+      "Belgium": "be", "Egypt": "eg", "IR Iran": "ir", "Iran": "ir", "New Zealand": "nz",
+      "Spain": "es", "Cabo Verde": "cv", "Cape Verde": "cv", "Saudi Arabia": "sa", "Uruguay": "uy",
+      "France": "fr", "Senegal": "sn", "Iraq": "iq", "Norway": "no",
+      "Argentina": "ar", "Algeria": "dz", "Austria": "at", "Jordan": "jo",
+      "Portugal": "pt", "Congo DR": "cd", "DR Congo": "cd", "Uzbekistan": "uz", "Colombia": "co",
+      "England": "gb-eng", "Croatia": "hr", "Ghana": "gh", "Panama": "pa"
     };
 
     function flagFor(teamName) {
-      return TEAM_FLAGS[teamName] || "🏳️";
+      const code = TEAM_FLAGS[teamName];
+      if (!code) return "";
+      // h40 = 40px tall, retina-friendly via srcset
+      return `<img class="flag" src="https://flagcdn.com/h40/${code}.png" srcset="https://flagcdn.com/h80/${code}.png 2x" alt="" loading="lazy">`;
     }
 
     let adminUnlocked = false;
@@ -1217,6 +1316,7 @@
       totalPicks: $("#totalPicks"),
       teamsUsed: $("#teamsUsed"),
       availableTeams: $("#availableTeams"),
+      lockBanner: $("#lockBanner"),
       potAmount: $("#potAmount"),
       potEntries: $("#potEntries"),
       todayWidget: $("#todayWidget"),
@@ -1295,6 +1395,40 @@
       elements.availableTeams.textContent = getAvailableTeams().length;
     }
 
+    // === ENTRY LOCK ===
+    // Picker auto-locks when the tournament kicks off.
+    // Thursday 11 June 2026, 8:00pm UK time (Mexico v South Africa)
+    const ENTRY_LOCK_TIME = new Date("2026-06-11T19:00:00Z"); // 19:00 UTC = 20:00 BST
+
+    function isEntriesLocked() {
+      return Date.now() >= ENTRY_LOCK_TIME.getTime();
+    }
+
+    function formatCountdown(ms) {
+      const totalSeconds = Math.floor(ms / 1000);
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      if (days > 1) return `${days} days, ${hours}h`;
+      if (days === 1) return `1 day, ${hours}h ${minutes}m`;
+      if (hours > 0) return `${hours}h ${minutes}m`;
+      return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+    }
+
+    function renderLockBanner() {
+      const banner = elements.lockBanner;
+      if (!banner) return;
+
+      if (isEntriesLocked()) {
+        banner.className = "lock-banner show locked";
+        banner.innerHTML = `<span class="lock-icon">🔒</span> <span>Entries are now closed — the tournament has kicked off. Good luck everyone!</span>`;
+      } else {
+        const remaining = ENTRY_LOCK_TIME.getTime() - Date.now();
+        banner.className = "lock-banner show countdown";
+        banner.innerHTML = `<span class="lock-icon">⏱️</span> <span>Entries close in <b>${formatCountdown(remaining)}</b> · Thursday 11 June, 8pm</span>`;
+      }
+    }
+
     function renderPot() {
       const count = entries.length;
       const total = count * ENTRY_PRICE;
@@ -1337,7 +1471,7 @@
           <div>
             <div class="name">${escapeHtml(person.displayName)}</div>
             <div class="teams-chips">
-              ${person.picks.map(p => `<span class="chip"><span class="flag">${flagFor(p.team)}</span>${escapeHtml(p.team)}</span>`).join("")}
+              ${person.picks.map(p => `<span class="chip">${flagFor(p.team)}${escapeHtml(p.team)}</span>`).join("")}
             </div>
           </div>
           <div class="team-count">${person.picks.length} × £${ENTRY_PRICE}</div>
@@ -1378,7 +1512,7 @@
       const badgeClass = count > 1 ? "hot" : count === 0 ? "empty" : "";
       return `
         <div class="team-line">
-          <span><span class="flag">${flagFor(team.name)}</span>${escapeHtml(team.name)}</span>
+          <span>${flagFor(team.name)}${escapeHtml(team.name)}</span>
           <span class="badge ${badgeClass}">${count}</span>
         </div>
       `;
@@ -1415,15 +1549,26 @@
     }
 
     function renderAccessState() {
-      elements.personName.disabled = !adminUnlocked;
-      elements.pickBtn.disabled = !adminUnlocked;
+      const locked = isEntriesLocked();
+      const canPick = adminUnlocked && !locked;
+
+      elements.personName.disabled = !canPick;
+      elements.pickBtn.disabled = !canPick;
       elements.pickerLockNotice.style.display = adminUnlocked ? "none" : "grid";
-      elements.pickBtn.textContent = adminUnlocked ? "Pick Random Team (+£2)" : "Locked";
+
+      if (locked) {
+        elements.pickBtn.textContent = "Entries Closed";
+      } else if (adminUnlocked) {
+        elements.pickBtn.textContent = "Pick Random Team (+£2)";
+      } else {
+        elements.pickBtn.textContent = "Locked";
+      }
     }
 
     function renderAll() {
       renderStats();
       renderPot();
+      renderLockBanner();
       renderLeaderboard();
       renderBrackets();
       renderAdmin();
@@ -1486,13 +1631,21 @@
         return;
       }
 
+      if (isEntriesLocked()) {
+        toast("Entries are closed — the tournament has started.");
+        return;
+      }
+
       const name = normalizeName(elements.personName.value);
       if (!name) return toast("Enter a name first.");
       if (!teams.length) return toast("No teams found. Add teams in Admin, then press Save Teams.");
 
-      // Prefer un-picked teams, but allow re-picks if all are taken (so the sweepstake can keep growing).
+      // RULE: every team must be picked at least once before duplicates are allowed.
+      // Once every team has been drawn (i.e. no un-picked teams remain), we open up
+      // the full pool so multiple people can hold the same team.
       const available = getAvailableTeams();
-      const pool = available.length ? available : teams;
+      const allTeamsCovered = available.length === 0;
+      const pool = allTeamsCovered ? teams : available;
       if (!pool.length) return toast("No teams to draw from.");
 
       elements.pickBtn.disabled = true;
@@ -1511,8 +1664,8 @@
         }), "Adding pick");
 
         elements.personName.value = "";
-        const note = available.length ? "" : " (all teams were taken — duplicate allowed)";
-        toast(`${name} got ${chosen.name}. +£${ENTRY_PRICE} to the pot${note}.`);
+        const note = allTeamsCovered ? " · All 48 teams now covered — duplicates allowed!" : "";
+        toast(`${name} got ${chosen.name}. +£${ENTRY_PRICE} to the pot${note}`);
       } catch (error) {
         console.error(error);
         toast(`Could not add pick: ${error.message}`);
@@ -1639,15 +1792,30 @@
       if (event.key === "Enter") pickRandomTeam();
     });
 
-    function unlockAdmin() {
-      if (elements.adminPin.value.trim() === ADMIN_PIN) {
-        adminUnlocked = true;
-        elements.adminLock.style.display = "none";
-        elements.adminContent.style.display = "block";
-        renderAccessState();
-        toast("Admin unlocked. Picker is now live.");
-      } else {
-        toast("Wrong PIN.");
+    async function unlockAdmin() {
+      const entered = elements.adminPin.value.trim();
+      if (!entered) {
+        toast("Enter the PIN first.");
+        return;
+      }
+
+      // Hash what the user typed and compare to the stored hash.
+      // The plaintext PIN is never present in the source code or in memory.
+      try {
+        const enteredHash = await hashPin(entered);
+        if (enteredHash === ADMIN_PIN_HASH) {
+          adminUnlocked = true;
+          elements.adminPin.value = "";
+          elements.adminLock.style.display = "none";
+          elements.adminContent.style.display = "block";
+          renderAccessState();
+          toast("Admin unlocked. Picker is now live.");
+        } else {
+          toast("Wrong PIN.");
+        }
+      } catch (err) {
+        console.error(err);
+        toast("Couldn't check PIN. Try again.");
       }
     }
 
@@ -1891,8 +2059,8 @@
         const hasPick = match.stage === "group" && (homePicked || awayPicked);
         if (hasPick) ourCount += 1;
 
-        const homeFlag = match.stage === "group" ? `<span class="flag">${flagFor(match.home)}</span>` : "";
-        const awayFlag = match.stage === "group" ? `<span class="flag">${flagFor(match.away)}</span>` : "";
+        const homeFlag = match.stage === "group" ? `${flagFor(match.home)}` : "";
+        const awayFlag = match.stage === "group" ? `${flagFor(match.away)}` : "";
 
         const homeHtml = homePicked ? `<span class="picked">${homeFlag}${escapeHtml(match.home)}</span>` : `${homeFlag}${escapeHtml(match.home)}`;
         const awayHtml = awayPicked ? `<span class="picked">${awayFlag}${escapeHtml(match.away)}</span>` : `${awayFlag}${escapeHtml(match.away)}`;
@@ -1983,8 +2151,8 @@
       const awayPicked = pickedTeams.has(awayN);
       const highlight = match.stage === "group" && (homePicked || awayPicked);
 
-      const homeFlag = match.stage === "group" ? `<span class="flag">${flagFor(match.home)}</span>` : "";
-      const awayFlag = match.stage === "group" ? `<span class="flag">${flagFor(match.away)}</span>` : "";
+      const homeFlag = match.stage === "group" ? `${flagFor(match.home)}` : "";
+      const awayFlag = match.stage === "group" ? `${flagFor(match.away)}` : "";
 
       const homeHtml = homePicked ? `<span class="picked">${homeFlag}${escapeHtml(match.home)}</span>` : `${homeFlag}${escapeHtml(match.home)}`;
       const awayHtml = awayPicked ? `<span class="picked">${awayFlag}${escapeHtml(match.away)}</span>` : `${awayFlag}${escapeHtml(match.away)}`;
@@ -2051,9 +2219,13 @@
 
     boot();
 
-    // Refresh "Today's matches" every 10 minutes so it picks up date rollover
-    // without needing the user to reload the page.
-    setInterval(renderToday, 10 * 60 * 1000);
+    // Refresh "Today's matches" and lock countdown every minute so the page
+    // stays accurate without a manual reload.
+    setInterval(() => {
+      renderToday();
+      renderLockBanner();
+      renderAccessState();
+    }, 60 * 1000);
   </script>
 </body>
 </html>
