@@ -1206,7 +1206,7 @@
     // when someone opens DevTools. To change it, run in any browser console:
     //   crypto.subtle.digest("SHA-256", new TextEncoder().encode("YOUR_NEW_PIN"))
     //     .then(b => console.log([...new Uint8Array(b)].map(x => x.toString(16).padStart(2,"0")).join("")));
-    const ADMIN_PIN_HASH = "22d7b91d081c65de3c1bcdde849d627f21cf4d3017523655c388331f1494dc18";
+    const ADMIN_PIN_HASH = "e2ebbd28c986d16d8457ba7ae066cedd112f0d6a48f3556552b909cd33215f09";
 
     async function hashPin(pin) {
       const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pin));
