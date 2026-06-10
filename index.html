@@ -2227,5 +2227,315 @@
       renderAccessState();
     }, 60 * 1000);
   </script>
+  <!-- ============================================================
+  GXO WORLD CUP — PRIZE POT POPUP
+  Paste this ENTIRE block into index.html, just above </body>.
+  It is 100% self-contained: no changes needed anywhere else.
+  The pot amount inside the popup mirrors your live #potAmount
+  element automatically, so it updates in real time.
+============================================================= -->
+<style>
+  .wcpop-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(4, 4, 6, 0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .35s ease;
+  }
+
+  .wcpop-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .wcpop-card {
+    position: relative;
+    width: min(560px, 100%);
+    padding: 44px 36px 36px;
+    border-radius: 30px;
+    text-align: center;
+    overflow: hidden;
+    color: #fff;
+    background:
+      radial-gradient(circle at 85% 12%, rgba(255, 209, 102, 0.4), transparent 50%),
+      radial-gradient(circle at 10% 95%, rgba(255, 90, 0, 0.35), transparent 55%),
+      linear-gradient(150deg, #1a1305, #221204 55%, #2e1500);
+    border: 1px solid rgba(255, 209, 102, 0.55);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+      0 0 90px rgba(255, 160, 40, 0.28),
+      0 40px 120px rgba(0, 0, 0, 0.65);
+    transform: translateY(36px) scale(.94);
+    transition: transform .45s cubic-bezier(.2, .9, .25, 1.2);
+  }
+
+  .wcpop-overlay.show .wcpop-card {
+    transform: translateY(0) scale(1);
+  }
+
+  /* animated golden sheen sweeping across the card */
+  .wcpop-card::before {
+    content: "";
+    position: absolute;
+    top: -60%;
+    left: -80%;
+    width: 60%;
+    height: 220%;
+    transform: rotate(20deg);
+    background: linear-gradient(90deg, transparent, rgba(255, 230, 160, 0.14), transparent);
+    animation: wcpopSheen 4.2s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes wcpopSheen {
+    0%   { left: -80%; }
+    55%  { left: 130%; }
+    100% { left: 130%; }
+  }
+
+  .wcpop-trophy {
+    font-size: 56px;
+    line-height: 1;
+    filter: drop-shadow(0 10px 26px rgba(255, 209, 102, 0.55));
+    animation: wcpopFloat 3s ease-in-out infinite;
+  }
+
+  @keyframes wcpopFloat {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50%      { transform: translateY(-9px) rotate(3deg); }
+  }
+
+  .wcpop-eyebrow {
+    margin-top: 14px;
+    font-family: Oswald, Inter, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #ffd166;
+  }
+
+  .wcpop-amount {
+    margin: 6px 0 2px;
+    font-family: Oswald, Inter, sans-serif;
+    font-weight: 700;
+    font-size: clamp(64px, 14vw, 104px);
+    line-height: .95;
+    letter-spacing: -3px;
+    background: linear-gradient(180deg, #fff 20%, #ffd166 70%, #ff8a2a);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 6px 30px rgba(255, 180, 60, 0.35));
+  }
+
+  .wcpop-entries {
+    color: #c9b89a;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+  }
+
+  .wcpop-divider {
+    width: 70px;
+    height: 3px;
+    margin: 20px auto;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ff5a00, #ffd166);
+  }
+
+  .wcpop-message {
+    font-size: 16.5px;
+    line-height: 1.55;
+    color: #efe6d6;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .wcpop-message b { color: #ffd166; }
+
+  .wcpop-cta {
+    margin-top: 26px;
+    width: 100%;
+    padding: 16px 20px;
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 900;
+    font-size: 16px;
+    letter-spacing: .4px;
+    color: #fff;
+    background: linear-gradient(135deg, #ff5a00, #ff2f00);
+    box-shadow: 0 18px 44px rgba(255, 90, 0, 0.45);
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+
+  .wcpop-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 24px 54px rgba(255, 90, 0, 0.55);
+  }
+
+  .wcpop-cta:active { transform: translateY(0); }
+
+  .wcpop-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background .18s ease, transform .18s ease;
+  }
+
+  .wcpop-close:hover {
+    background: rgba(255, 255, 255, 0.18);
+    transform: rotate(90deg);
+  }
+
+  .wcpop-smallprint {
+    margin-top: 14px;
+    font-size: 11.5px;
+    letter-spacing: .4px;
+    color: #9a8c74;
+  }
+
+  /* falling confetti inside the card */
+  .wcpop-confetti {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 30px;
+  }
+
+  .wcpop-confetti i {
+    position: absolute;
+    top: -16px;
+    width: 7px;
+    height: 16px;
+    border-radius: 3px;
+    opacity: 0;
+    animation: wcpopFall 2.6s linear infinite;
+  }
+
+  @keyframes wcpopFall {
+    0%   { opacity: 0; transform: translateY(0) rotate(0deg); }
+    8%   { opacity: 1; }
+    100% { opacity: 0; transform: translateY(620px) rotate(300deg); }
+  }
+
+  @media (max-width: 640px) {
+    .wcpop-card { padding: 36px 22px 26px; border-radius: 24px; }
+    .wcpop-trophy { font-size: 46px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wcpop-card::before,
+    .wcpop-trophy,
+    .wcpop-confetti i { animation: none; }
+    .wcpop-overlay, .wcpop-card { transition: none; }
+  }
+</style>
+
+<div class="wcpop-overlay" id="wcpopOverlay" role="dialog" aria-modal="true" aria-labelledby="wcpopTitle">
+  <div class="wcpop-card">
+    <div class="wcpop-confetti" id="wcpopConfetti"></div>
+    <button class="wcpop-close" id="wcpopClose" aria-label="Close">✕</button>
+    <div class="wcpop-trophy">🏆</div>
+    <div class="wcpop-eyebrow" id="wcpopTitle">Current Prize Pot</div>
+    <div class="wcpop-amount" id="wcpopAmount">£0</div>
+    <div class="wcpop-entries" id="wcpopEntries">Live · grows with every entry</div>
+    <div class="wcpop-divider"></div>
+    <p class="wcpop-message">
+      Fancy your chances? <b>Speak to a lead team member</b> to get your name
+      in the draw — every entry is just <b>£2</b> and the winner takes the pot.
+    </p>
+    <button class="wcpop-cta" id="wcpopCta">Let's go ⚽</button>
+    <div class="wcpop-smallprint">GXO World Cup Sweepstake · 11 June – 19 July 2026</div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const overlay = document.getElementById("wcpopOverlay");
+    const amountEl = document.getElementById("wcpopAmount");
+    const entriesEl = document.getElementById("wcpopEntries");
+    const confettiBox = document.getElementById("wcpopConfetti");
+
+    // --- Mirror the live pot from the main page (no edits to your code) ---
+    const sourceAmount = document.getElementById("potAmount");
+    const sourceEntries = document.getElementById("potEntries");
+
+    function syncPot() {
+      if (sourceAmount && sourceAmount.textContent.trim()) {
+        amountEl.textContent = sourceAmount.textContent.trim();
+      }
+      if (sourceEntries && sourceEntries.textContent.trim()) {
+        entriesEl.textContent = sourceEntries.textContent.trim() + " · winner takes the pot";
+      }
+    }
+
+    if (sourceAmount) {
+      new MutationObserver(syncPot).observe(sourceAmount, { childList: true, characterData: true, subtree: true });
+    }
+    if (sourceEntries) {
+      new MutationObserver(syncPot).observe(sourceEntries, { childList: true, characterData: true, subtree: true });
+    }
+    syncPot();
+
+    // --- Confetti bits ---
+    const colours = ["#ffd166", "#ff5a00", "#ffffff", "#19c37d"];
+    for (let i = 0; i < 26; i++) {
+      const bit = document.createElement("i");
+      bit.style.left = Math.random() * 100 + "%";
+      bit.style.background = colours[Math.floor(Math.random() * colours.length)];
+      bit.style.animationDelay = (Math.random() * 2.6) + "s";
+      bit.style.animationDuration = (2.2 + Math.random() * 1.6) + "s";
+      confettiBox.appendChild(bit);
+    }
+
+    // --- Show once per browser session ---
+    let alreadySeen = false;
+    try { alreadySeen = sessionStorage.getItem("wcpopSeen") === "1"; } catch (e) {}
+
+    function openPopup() {
+      syncPot();
+      overlay.classList.add("show");
+    }
+
+    function closePopup() {
+      overlay.classList.remove("show");
+      try { sessionStorage.setItem("wcpopSeen", "1"); } catch (e) {}
+    }
+
+    if (!alreadySeen) {
+      // small delay so Firebase has a moment to load the real pot value
+      setTimeout(openPopup, 900);
+    }
+
+    document.getElementById("wcpopClose").addEventListener("click", closePopup);
+    document.getElementById("wcpopCta").addEventListener("click", closePopup);
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) closePopup(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePopup(); });
+  })();
+</script>
+<!-- ====================== END POPUP BLOCK ====================== -->
 </body>
 </html>
