@@ -393,6 +393,98 @@
       margin-right: 6px;
     }
 
+    /* Unpaid entry styling */
+    .chip.unpaid {
+      background: rgba(255, 77, 77, 0.16);
+      border-color: rgba(255, 77, 77, 0.5);
+      color: #ff9a9a;
+    }
+
+    .chip.unpaid::after {
+      content: "NOT PAID";
+      font-size: 9px;
+      font-weight: 950;
+      letter-spacing: .8px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #ff4d4d;
+      color: #fff;
+    }
+
+    .owes-badge {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 77, 77, 0.2);
+      border: 1px solid rgba(255, 77, 77, 0.55);
+      color: #ff9a9a;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+    }
+
+    .paid-status {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+    }
+
+    .paid-status.yes { background: rgba(25,195,125,0.18); border: 1px solid rgba(25,195,125,0.45); color: var(--gxo-green); }
+    .paid-status.no { background: rgba(255,77,77,0.2); border: 1px solid rgba(255,77,77,0.55); color: #ff9a9a; }
+
+    /* Live scores */
+    .match-score {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-family: Oswald, Inter, sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.16);
+      margin: 0 6px;
+      vertical-align: -1px;
+    }
+
+    .match-score.live {
+      background: rgba(25,195,125,0.2);
+      border-color: rgba(25,195,125,0.55);
+      color: var(--gxo-green);
+    }
+
+    .match-score.ft {
+      background: rgba(255,255,255,0.12);
+      color: var(--gxo-white);
+    }
+
+    .live-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: 1px;
+      color: var(--gxo-green);
+      text-transform: uppercase;
+    }
+
+    .live-tag::before {
+      content: "";
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--gxo-green);
+      box-shadow: 0 0 10px var(--gxo-green);
+      animation: potBlink 1.4s ease-in-out infinite;
+    }
+
     .fixture-matchup .flag,
     .today-match-teams .flag {
       height: 16px;
@@ -996,7 +1088,7 @@
             </div>
           </div>
 
-          <p class="small" style="margin-top:16px;">Source: Sky Sports / FIFA · times shown in UK time (BST). Knockout fixtures use placeholder team labels (e.g. "Group A Winner") until the group stage concludes. <a href="https://www.skysports.com/world-cup-fixtures" target="_blank" rel="noopener noreferrer" style="color:var(--gold);">Open live source →</a></p>
+          <p class="small" style="margin-top:16px;">Fixture list: Sky Sports / FIFA · live scores: ESPN · times shown in UK time (BST). Knockout fixtures use placeholder team labels (e.g. "Group A Winner") until the group stage concludes. <a href="https://www.skysports.com/world-cup-fixtures" target="_blank" rel="noopener noreferrer" style="color:var(--gold);">Open live source →</a></p>
         </div>
       </section>
 
@@ -1058,6 +1150,7 @@
       ref,
       push,
       set,
+      update,
       remove,
       get,
       onValue,
@@ -1304,17 +1397,22 @@
 
       const people = groupEntriesByPerson();
 
-      elements.leaderboard.innerHTML = people.map(person => `
+      elements.leaderboard.innerHTML = people.map(person => {
+        const unpaid = person.picks.filter(p => p.paid === false).length;
+        const owesHtml = unpaid > 0 ? `<div class="owes-badge">Owes £${unpaid * ENTRY_PRICE}</div>` : "";
+        return `
         <div class="entry-card person-card">
           <div>
             <div class="name">${escapeHtml(person.displayName)}</div>
             <div class="teams-chips">
-              ${person.picks.map(p => `<span class="chip">${flagFor(p.team)}${escapeHtml(p.team)}</span>`).join("")}
+              ${person.picks.map(p => `<span class="chip ${p.paid === false ? "unpaid" : ""}">${flagFor(p.team)}${escapeHtml(p.team)}</span>`).join("")}
             </div>
+            ${owesHtml}
           </div>
           <div class="team-count">${person.picks.length} × £${ENTRY_PRICE}</div>
         </div>
-      `).join("");
+      `;
+      }).join("");
     }
 
     function renderBrackets() {
@@ -1368,20 +1466,43 @@
         return;
       }
 
-      elements.adminEntries.innerHTML = entries.map(entry => `
+      elements.adminEntries.innerHTML = entries.map(entry => {
+        const isUnpaid = entry.paid === false;
+        return `
         <div class="entry-card">
           <div>
             <div class="name">${escapeHtml(entry.name)}</div>
             <div class="small">${escapeHtml(entry.group || "No group")} | ${escapeHtml(entry.team)}</div>
+            <span class="paid-status ${isUnpaid ? "no" : "yes"}">${isUnpaid ? "Not paid" : "Paid"}</span>
           </div>
-          <button class="danger" data-delete-entry="${entry.id}">Delete</button>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+            <button class="${isUnpaid ? "success" : ""}" data-toggle-paid="${entry.id}" data-currently-unpaid="${isUnpaid ? "1" : "0"}">${isUnpaid ? "Mark paid" : "Mark not paid"}</button>
+            <button class="danger" data-delete-entry="${entry.id}">Delete</button>
+          </div>
         </div>
-      `).join("");
+      `;
+      }).join("");
 
       $$('[data-delete-entry]').forEach(button => {
         button.addEventListener("click", async () => {
           await withTimeout(remove(ref(db, `worldcup_entries/${button.dataset.deleteEntry}`)), "Deleting entry");
           toast("Entry deleted.");
+        });
+      });
+
+      $$('[data-toggle-paid]').forEach(button => {
+        button.addEventListener("click", async () => {
+          const makePaid = button.dataset.currentlyUnpaid === "1";
+          try {
+            await withTimeout(
+              update(ref(db, `worldcup_entries/${button.dataset.togglePaid}`), { paid: makePaid }),
+              "Updating paid status"
+            );
+            toast(makePaid ? "Marked as paid." : "Marked as NOT paid — it'll show on the board.");
+          } catch (error) {
+            console.error(error);
+            toast(`Could not update: ${error.message}. Check database write rules are enabled.`);
+          }
         });
       });
     }
@@ -1472,7 +1593,8 @@
           team: selectedTeam.name,
           group: selectedTeam.group,
           createdAt: serverTimestamp(),
-          manual: true
+          manual: true,
+          paid: true
         }), "Adding manual entry");
 
         elements.manualName.value = "";
@@ -1740,6 +1862,70 @@
       return FIXTURE_TEAM_ALIASES[name] || name;
     }
 
+    // === LIVE SCORES (ESPN public scoreboard — free, no API key) ===
+    // ESPN sometimes uses slightly different team names; map them to ours.
+    const ESPN_NAME_ALIASES = {
+      "United States": "USA",
+      "Democratic Republic of the Congo": "Congo DR",
+      "Republic of Ireland": "Ireland",
+      "Korea Republic": "Korea Republic",
+      "South Korea": "Korea Republic"
+    };
+
+    function canonTeam(name) {
+      const mapped = ESPN_NAME_ALIASES[name] || name;
+      return normaliseTeam(mapped).toLowerCase().trim();
+    }
+
+    let liveScores = {}; // "home|away" (canonical, lowercase) -> { hs, as, state, detail }
+
+    async function fetchLiveScores() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+      const todayKey = `${yyyy}-${mm}-${dd}`;
+
+      // Only bother during the tournament window
+      if (!FIXTURES.some(f => f.date === todayKey)) return;
+
+      try {
+        const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${yyyy}${mm}${dd}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const map = {};
+        (data.events || []).forEach(ev => {
+          const comp = ev.competitions && ev.competitions[0];
+          if (!comp || !comp.competitors) return;
+          const home = comp.competitors.find(c => c.homeAway === "home");
+          const away = comp.competitors.find(c => c.homeAway === "away");
+          if (!home || !away) return;
+          const key = `${canonTeam(home.team.displayName)}|${canonTeam(away.team.displayName)}`;
+          map[key] = {
+            hs: home.score,
+            as: away.score,
+            state: ev.status && ev.status.type ? ev.status.type.state : "pre", // pre | in | post
+            detail: (ev.status && ev.status.type && ev.status.type.shortDetail) || ""
+          };
+        });
+        liveScores = map;
+        renderToday();
+      } catch (e) {
+        // Scores are a bonus — fail silently and the page works as before.
+        console.warn("Live scores unavailable:", e);
+      }
+    }
+
+    function scoreFor(homeName, awayName) {
+      const h = canonTeam(homeName);
+      const a = canonTeam(awayName);
+      const direct = liveScores[`${h}|${a}`];
+      if (direct) return direct;
+      const reversed = liveScores[`${a}|${h}`];
+      if (reversed) return { ...reversed, hs: reversed.as, as: reversed.hs };
+      return null;
+    }
+
     const STAGE_LABELS = {
       group: "GROUP",
       r32: "R32",
@@ -1801,8 +1987,20 @@
         const homeHtml = homePicked ? `<span class="picked">${homeFlag}${escapeHtml(match.home)}</span>` : `${homeFlag}${escapeHtml(match.home)}`;
         const awayHtml = awayPicked ? `<span class="picked">${awayFlag}${escapeHtml(match.away)}</span>` : `${awayFlag}${escapeHtml(match.away)}`;
 
+        // Live score (if available) replaces the plain "vs"
+        const score = match.stage === "group" ? scoreFor(match.home, match.away) : null;
+        let separator = `<span class="small">vs</span>`;
+        let statusLine = "";
+        if (score && score.state === "in") {
+          separator = `<span class="match-score live">${escapeHtml(score.hs)} – ${escapeHtml(score.as)}</span>`;
+          statusLine = `<div class="today-pickers"><span class="live-tag">Live</span> ${escapeHtml(score.detail)}</div>`;
+        } else if (score && score.state === "post") {
+          separator = `<span class="match-score ft">${escapeHtml(score.hs)} – ${escapeHtml(score.as)}</span>`;
+          statusLine = `<div class="today-pickers">Full time</div>`;
+        }
+
         const matchup = match.stage === "group"
-          ? `${homeHtml} <span class="small">vs</span> ${awayHtml}`
+          ? `${homeHtml} ${separator} ${awayHtml}`
           : `<b>${escapeHtml(match.home)}</b> <span class="small">— ${escapeHtml(match.away)}</span>`;
 
         // Show pickers if any
@@ -1821,6 +2019,7 @@
             <div class="today-match-time">${escapeHtml(match.time)}</div>
             <div>
               <div class="today-match-teams">${matchup}</div>
+              ${statusLine}
               ${pickersLine}
             </div>
             <div class="today-match-meta">${escapeHtml(tag)} · ${escapeHtml(match.venue)}</div>
@@ -1954,10 +2153,12 @@
     }
 
     boot();
+    fetchLiveScores();
 
-    // Refresh "Today's matches" every minute so the page stays accurate
-    // without a manual reload (e.g. when the date ticks over at midnight).
+    // Refresh "Today's matches" and live scores every minute so the page
+    // stays accurate without a manual reload.
     setInterval(() => {
+      fetchLiveScores();
       renderToday();
     }, 60 * 1000);
   </script>
