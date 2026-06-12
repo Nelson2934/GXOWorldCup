@@ -230,146 +230,6 @@
       box-shadow: 0 0 0 4px rgba(255,90,0,0.18);
     }
 
-    .pick-stage {
-      position: relative;
-      display: grid;
-      place-items: center;
-      min-height: 360px;
-      overflow: hidden;
-      border-radius: 28px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background:
-        radial-gradient(circle at center, rgba(255, 90, 0, 0.19), transparent 34%),
-        linear-gradient(145deg, rgba(0,0,0,0.45), rgba(255,255,255,0.04));
-    }
-
-    .draw-machine {
-      position: relative;
-      width: min(560px, 94%);
-      min-height: 250px;
-      display: grid;
-      place-items: center;
-      padding: 28px;
-      border-radius: 34px;
-      background:
-        linear-gradient(145deg, rgba(255,90,0,0.22), rgba(255,255,255,0.06)),
-        radial-gradient(circle at 50% 18%, rgba(255,255,255,0.22), transparent 34%);
-      border: 1px solid rgba(255,255,255,0.18);
-      box-shadow: inset 0 0 70px rgba(255,90,0,0.08), 0 28px 80px rgba(0,0,0,0.46);
-      overflow: hidden;
-    }
-
-    .draw-machine::before,
-    .draw-machine::after {
-      content: "";
-      position: absolute;
-      width: 170px;
-      height: 170px;
-      border-radius: 50%;
-      background:
-        radial-gradient(circle at 30% 30%, #fff, #ececec 22%, #121212 23% 34%, #fff 35% 48%, #111 49% 61%, #fff 62%);
-      opacity: .22;
-      filter: blur(.2px);
-      animation: ballOrbit 7s linear infinite;
-    }
-
-    .draw-machine::before { left: -55px; top: -55px; }
-    .draw-machine::after { right: -60px; bottom: -70px; animation-direction: reverse; }
-
-    @keyframes ballOrbit {
-      from { transform: rotate(0deg) scale(1); }
-      50% { transform: rotate(180deg) scale(1.08); }
-      to { transform: rotate(360deg) scale(1); }
-    }
-
-    .slot-window {
-      position: relative;
-      z-index: 1;
-      width: min(430px, 100%);
-      padding: 18px;
-      border-radius: 26px;
-      background: rgba(0,0,0,0.58);
-      border: 1px solid rgba(255,255,255,0.16);
-      box-shadow: inset 0 0 22px rgba(0,0,0,0.6);
-      text-align: center;
-    }
-
-    .slot-label {
-      color: var(--gxo-muted);
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: 1.4px;
-      text-transform: uppercase;
-      margin-bottom: 10px;
-    }
-
-    .slot-name {
-      display: grid;
-      place-items: center;
-      min-height: 86px;
-      padding: 14px;
-      border-radius: 18px;
-      background: linear-gradient(135deg, var(--gxo-orange), #ff2f00);
-      color: #fff;
-      font-family: Oswald, Inter, sans-serif;
-      font-size: clamp(34px, 5vw, 62px);
-      line-height: .95;
-      text-transform: uppercase;
-      box-shadow: 0 18px 40px rgba(255,90,0,0.26);
-      transition: transform .18s ease, filter .18s ease;
-    }
-
-    .slot-name.spinning {
-      animation: slotPulse .12s linear infinite;
-      filter: saturate(1.35);
-    }
-
-    @keyframes slotPulse {
-      from { transform: translateY(-2px) scale(1.01); }
-      to { transform: translateY(2px) scale(.99); }
-    }
-
-    .confetti {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      overflow: hidden;
-      border-radius: 28px;
-    }
-
-    .confetti i {
-      position: absolute;
-      top: -14px;
-      width: 8px;
-      height: 18px;
-      border-radius: 3px;
-      background: var(--gold);
-      animation: fall 900ms ease-in forwards;
-    }
-
-    @keyframes fall {
-      to { transform: translateY(330px) rotate(240deg); opacity: 0; }
-    }
-
-    .team-result {
-      position: absolute;
-      inset: auto 22px 22px;
-      padding: 18px;
-      border-radius: 22px;
-      background: rgba(0,0,0,0.58);
-      border: 1px solid rgba(255,255,255,0.16);
-      text-align: center;
-    }
-
-    .team-result strong {
-      display: block;
-      font-size: clamp(28px, 5vw, 54px);
-      font-family: Oswald, Inter, sans-serif;
-      color: var(--gold);
-      text-transform: uppercase;
-      line-height: 1;
-    }
-
     /* MONEY POT */
     .pot {
       position: relative;
@@ -612,12 +472,6 @@
     }
 
     .lock-banner.show { display: flex; }
-
-    .lock-banner.countdown {
-      background: rgba(25, 195, 125, 0.15);
-      border: 1px solid rgba(25, 195, 125, 0.4);
-      color: var(--gxo-green);
-    }
 
     .lock-banner.locked {
       background: linear-gradient(90deg, rgba(255, 77, 77, 0.25), rgba(255, 77, 77, 0.08));
@@ -871,6 +725,8 @@
       .fixture-time { font-size: 16px; }
       .fixture-matchup { font-size: 14px; }
     }
+
+    .fixture-keydates {
       padding: 20px 22px;
       border-radius: 22px;
       background: rgba(0,0,0,0.28);
@@ -968,6 +824,37 @@
       text-align: center;
     }
 
+    /* Tournament status panel (replaces the old picker) */
+    .draw-done {
+      margin: 14px 0 0;
+      padding: 24px;
+      border-radius: 22px;
+      text-align: center;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255,209,102,0.18), transparent 55%),
+        rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,209,102,0.3);
+    }
+
+    .draw-done .ball { font-size: 44px; line-height: 1; }
+
+    .draw-done h3 {
+      margin: 12px 0 6px;
+      font-family: Oswald, Inter, sans-serif;
+      font-size: 28px;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      color: var(--gold);
+    }
+
+    .draw-done p {
+      margin: 0 auto;
+      max-width: 420px;
+      color: var(--gxo-muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
     @media (max-width: 1050px) {
       header, .grid, .admin-grid { grid-template-columns: 1fr; }
       .tabs { justify-content: flex-start; }
@@ -981,9 +868,6 @@
       .logo-mark { width: 54px; height: 54px; border-radius: 16px; font-size: 18px; }
       .form-row { grid-template-columns: 1fr; }
       .groups, .stat-row { grid-template-columns: 1fr; }
-      .pick-stage { min-height: 310px; }
-      .draw-machine { min-height: 230px; padding: 18px; }
-      .slot-name { min-height: 76px; }
       .pot { grid-template-columns: 1fr; }
       .pot-meta { text-align: left; }
     }
@@ -1008,13 +892,13 @@
       <div class="brand">
         <div class="logo-mark">GXO</div>
         <div>
-          <h1>World Cup Picker</h1>
-          <div class="subtitle">A live office sweepstake board. Add a name, press pick, and the app randomly assigns a team. Each entry adds £2 to the pot. One person can hold as many teams as they like.</div>
+          <h1>World Cup Sweepstake</h1>
+          <div class="subtitle">Entries are closed — the draw is done and the tournament is live. Follow today's matches, watch the pot, and see whose teams are still in the hunt. Good luck everyone!</div>
           <div class="football-strip"><i></i><i></i><i></i><i></i><i></i></div>
         </div>
       </div>
       <nav class="tabs">
-        <button class="tab active" data-page="pickerPage">Picker</button>
+        <button class="tab active" data-page="pickerPage">Matchday</button>
         <button class="tab" data-page="bracketPage">Team Brackets</button>
         <button class="tab" data-page="fixturesPage">Fixtures</button>
         <button class="tab" data-page="adminPage">Admin</button>
@@ -1026,12 +910,12 @@
 
         <div class="pot">
           <div>
-            <div class="pot-label">Prize Pot · £2 per entry</div>
+            <div class="pot-label">Prize Pot · Locked In</div>
             <div class="pot-amount" id="potAmount">£0</div>
           </div>
           <div class="pot-meta">
             <b id="potEntries">0 entries</b>
-            Live · updates instantly
+            Winner takes half · half to Andy's Man Club
           </div>
         </div>
 
@@ -1048,33 +932,21 @@
 
         <div class="grid">
           <div class="panel">
-            <h2>Pick a Team</h2>
-            <p>Admin must unlock the picker before names can be added. Once unlocked, enter a name and hit the button. The same name can pick again as many times as you like — every entry costs £2.</p>
-            <div id="pickerLockNotice" class="entry-card" style="margin: 14px 0;">
-              <div>
-                <div class="name">Picker locked</div>
-                <div class="small">Go to Admin and enter the PIN to unlock adding players.</div>
-              </div>
-            </div>
-            <div class="form-row">
-              <input id="personName" placeholder="Enter name, e.g. James Nelson" autocomplete="off" disabled />
-              <button class="primary" id="pickBtn" disabled>Pick Random Team</button>
-            </div>
+            <h2>Tournament Tracker</h2>
             <div id="lockBanner" class="lock-banner"></div>
-            <div class="pick-stage">
-              <div class="draw-machine">
-                <div class="slot-window">
-                  <div class="slot-label" id="slotLabel">Waiting for next draw</div>
-                  <div class="slot-name" id="slotName">Ready</div>
-                </div>
-                <div class="confetti" id="confetti"></div>
+            <div class="draw-done">
+              <div class="ball">⚽</div>
+              <h3>The Draw Is Done</h3>
+              <p>Every entry is in and the teams are locked. From here it's all about the football — today's games show above, and the full schedule lives in Fixtures. Matches with one of our teams are highlighted in gold.</p>
+              <div class="toolbar" style="justify-content:center; margin:18px 0 0;">
+                <button class="primary" id="goFixturesBtn">See all fixtures →</button>
+                <button id="goBracketsBtn">Who has which team?</button>
               </div>
-
             </div>
             <div class="stat-row">
-              <div class="stat"><span>Total Picks</span><b id="totalPicks">0</b></div>
-              <div class="stat"><span>Teams Used</span><b id="teamsUsed">0</b></div>
-              <div class="stat"><span>Available Teams</span><b id="availableTeams">0</b></div>
+              <div class="stat"><span>Total Entries</span><b id="totalPicks">0</b></div>
+              <div class="stat"><span>Teams Held</span><b id="teamsUsed">0</b></div>
+              <div class="stat"><span>Players In</span><b id="playersCount">0</b></div>
             </div>
           </div>
 
@@ -1089,7 +961,7 @@
       <section id="bracketPage" class="page">
         <div class="panel">
           <h2>Team Brackets</h2>
-          <p>Grouped by World Cup group. The number next to each team shows how many entries currently hold that team.</p>
+          <p>Grouped by World Cup group. The number next to each team shows how many entries hold that team.</p>
           <div class="toolbar">
             <button class="primary" id="sortGroupBtn">Group View</button>
             <button id="sortCountBtn">Most Picked</button>
@@ -1152,7 +1024,7 @@
 
             <div class="panel">
               <h2>Manual Entry</h2>
-              <p>Use this if someone needs adding manually or you want to assign a specific team. Multiple entries per person are allowed.</p>
+              <p>Entries are closed for everyone else, but admins can still fix mistakes here — add a missed entry or assign a specific team.</p>
               <input id="manualName" placeholder="Name" style="margin-bottom:10px;" />
               <select id="manualTeam" style="margin-bottom:10px;"></select>
               <div class="toolbar">
@@ -1213,6 +1085,11 @@
       return [...new Uint8Array(buf)].map(x => x.toString(16).padStart(2, "0")).join("");
     }
     const ENTRY_PRICE = 2; // £ per entry — change here if needed
+
+    // === ENTRIES ARE NOW CLOSED ===
+    // The public picker has been removed: the tournament has kicked off and
+    // the draw is final. Admins can still add/fix entries from the Admin tab.
+    const ENTRIES_CLOSED = true;
 
     // ISO 3166-1 alpha-2 codes for each World Cup 2026 team (gb-eng / gb-sct for subdivisions)
     const TEAM_FLAGS = {
@@ -1306,16 +1183,11 @@
     const $$ = (selector) => [...document.querySelectorAll(selector)];
 
     const elements = {
-      personName: $("#personName"),
-      pickBtn: $("#pickBtn"),
-      slotLabel: $("#slotLabel"),
-      slotName: $("#slotName"),
-      confetti: $("#confetti"),
       leaderboard: $("#leaderboard"),
       groups: $("#groups"),
       totalPicks: $("#totalPicks"),
       teamsUsed: $("#teamsUsed"),
-      availableTeams: $("#availableTeams"),
+      playersCount: $("#playersCount"),
       lockBanner: $("#lockBanner"),
       potAmount: $("#potAmount"),
       potEntries: $("#potEntries"),
@@ -1325,7 +1197,6 @@
       todayMatches: $("#todayMatches"),
       adminPin: $("#adminPin"),
       loginBtn: $("#loginBtn"),
-      pickerLockNotice: $("#pickerLockNotice"),
       adminLock: $("#adminLock"),
       adminContent: $("#adminContent"),
       teamsInput: $("#teamsInput"),
@@ -1381,52 +1252,19 @@
       }, {});
     }
 
-    // Available teams = teams that no one has been assigned yet.
-    // Used to prefer fresh teams when picking. If empty, we allow re-picks.
-    function getAvailableTeams() {
-      const picked = new Set(entries.map(entry => entry.team));
-      return teams.filter(team => !picked.has(team.name));
-    }
-
     function renderStats() {
       const used = new Set(entries.map(entry => entry.team));
+      const players = new Set(entries.map(entry => String(entry.name || "").toLowerCase()));
       elements.totalPicks.textContent = entries.length;
       elements.teamsUsed.textContent = used.size;
-      elements.availableTeams.textContent = getAvailableTeams().length;
-    }
-
-    // === ENTRY LOCK ===
-    // Picker auto-locks when the tournament kicks off.
-    // Thursday 11 June 2026, 8:00pm UK time (Mexico v South Africa)
-    const ENTRY_LOCK_TIME = new Date("2026-06-11T19:00:00Z"); // 19:00 UTC = 20:00 BST
-
-    function isEntriesLocked() {
-      return Date.now() >= ENTRY_LOCK_TIME.getTime();
-    }
-
-    function formatCountdown(ms) {
-      const totalSeconds = Math.floor(ms / 1000);
-      const days = Math.floor(totalSeconds / 86400);
-      const hours = Math.floor((totalSeconds % 86400) / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      if (days > 1) return `${days} days, ${hours}h`;
-      if (days === 1) return `1 day, ${hours}h ${minutes}m`;
-      if (hours > 0) return `${hours}h ${minutes}m`;
-      return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+      elements.playersCount.textContent = players.size;
     }
 
     function renderLockBanner() {
       const banner = elements.lockBanner;
       if (!banner) return;
-
-      if (isEntriesLocked()) {
-        banner.className = "lock-banner show locked";
-        banner.innerHTML = `<span class="lock-icon">🔒</span> <span>Entries are now closed — the tournament has kicked off. Good luck everyone!</span>`;
-      } else {
-        const remaining = ENTRY_LOCK_TIME.getTime() - Date.now();
-        banner.className = "lock-banner show countdown";
-        banner.innerHTML = `<span class="lock-icon">⏱️</span> <span>Entries close in <b>${formatCountdown(remaining)}</b> · Thursday 11 June, 8pm</span>`;
-      }
+      banner.className = "lock-banner show locked";
+      banner.innerHTML = `<span class="lock-icon">🔒</span> <span>Entries are <b>closed</b> — the tournament has kicked off. Good luck everyone!</span>`;
     }
 
     function renderPot() {
@@ -1460,7 +1298,7 @@
 
     function renderLeaderboard() {
       if (!entries.length) {
-        elements.leaderboard.innerHTML = `<div class="entry-card"><div><div class="name">No picks yet</div><div class="small">The board is waiting for its first brave soul.</div></div></div>`;
+        elements.leaderboard.innerHTML = `<div class="entry-card"><div><div class="name">No picks on the board</div><div class="small">Entries are closed — an admin can add any missed entries from the Admin tab.</div></div></div>`;
         return;
       }
 
@@ -1548,23 +1386,6 @@
       });
     }
 
-    function renderAccessState() {
-      const locked = isEntriesLocked();
-      const canPick = adminUnlocked && !locked;
-
-      elements.personName.disabled = !canPick;
-      elements.pickBtn.disabled = !canPick;
-      elements.pickerLockNotice.style.display = adminUnlocked ? "none" : "grid";
-
-      if (locked) {
-        elements.pickBtn.textContent = "Entries Closed";
-      } else if (adminUnlocked) {
-        elements.pickBtn.textContent = "Pick Random Team (+£2)";
-      } else {
-        elements.pickBtn.textContent = "Locked";
-      }
-    }
-
     function renderAll() {
       renderStats();
       renderPot();
@@ -1572,7 +1393,6 @@
       renderLeaderboard();
       renderBrackets();
       renderAdmin();
-      renderAccessState();
       renderToday();
       renderFixtures();
     }
@@ -1591,88 +1411,6 @@
         teamData[id] = { ...team, createdAt: serverTimestamp() };
       });
       await withTimeout(set(teamsRef, teamData), "Saving default teams");
-    }
-
-    function runDrawAnimation(finalTeamName, personName) {
-      const pool = teams.length ? teams.map(team => team.name) : ["England", "Brazil", "France", "Argentina"];
-      elements.slotLabel.textContent = `Drawing for ${personName}`;
-      elements.slotName.classList.add("spinning");
-      elements.confetti.innerHTML = "";
-
-      let ticks = 0;
-      const interval = setInterval(() => {
-        elements.slotName.textContent = pool[Math.floor(Math.random() * pool.length)];
-        ticks += 1;
-        if (ticks >= 20) {
-          clearInterval(interval);
-          elements.slotName.classList.remove("spinning");
-          elements.slotLabel.textContent = `${personName} picked`;
-          elements.slotName.textContent = finalTeamName;
-          fireConfetti();
-        }
-      }, 70);
-    }
-
-    function fireConfetti() {
-      elements.confetti.innerHTML = "";
-      for (let i = 0; i < 30; i += 1) {
-        const bit = document.createElement("i");
-        bit.style.left = `${Math.random() * 100}%`;
-        bit.style.animationDelay = `${Math.random() * 350}ms`;
-        bit.style.background = Math.random() > .5 ? "var(--gold)" : "var(--gxo-orange)";
-        elements.confetti.appendChild(bit);
-      }
-      setTimeout(() => elements.confetti.innerHTML = "", 1600);
-    }
-
-    async function pickRandomTeam() {
-      if (!adminUnlocked) {
-        toast("Picker is locked. Unlock it in Admin first.");
-        return;
-      }
-
-      if (isEntriesLocked()) {
-        toast("Entries are closed — the tournament has started.");
-        return;
-      }
-
-      const name = normalizeName(elements.personName.value);
-      if (!name) return toast("Enter a name first.");
-      if (!teams.length) return toast("No teams found. Add teams in Admin, then press Save Teams.");
-
-      // RULE: every team must be picked at least once before duplicates are allowed.
-      // Once every team has been drawn (i.e. no un-picked teams remain), we open up
-      // the full pool so multiple people can hold the same team.
-      const available = getAvailableTeams();
-      const allTeamsCovered = available.length === 0;
-      const pool = allTeamsCovered ? teams : available;
-      if (!pool.length) return toast("No teams to draw from.");
-
-      elements.pickBtn.disabled = true;
-      elements.pickBtn.textContent = "Picking...";
-
-      const chosen = pool[Math.floor(Math.random() * pool.length)];
-
-      try {
-        runDrawAnimation(chosen.name, name);
-
-        await withTimeout(push(entriesRef, {
-          name,
-          team: chosen.name,
-          group: chosen.group,
-          createdAt: serverTimestamp()
-        }), "Adding pick");
-
-        elements.personName.value = "";
-        const note = allTeamsCovered ? " · All 48 teams now covered — duplicates allowed!" : "";
-        toast(`${name} got ${chosen.name}. +£${ENTRY_PRICE} to the pot${note}`);
-      } catch (error) {
-        console.error(error);
-        toast(`Could not add pick: ${error.message}`);
-      } finally {
-        elements.pickBtn.disabled = false;
-        elements.pickBtn.textContent = "Pick Random Team (+£2)";
-      }
     }
 
     function parseTeamsInput(value) {
@@ -1707,7 +1445,7 @@
 
         await withTimeout(set(teamsRef, teamData), "Saving teams");
         adminIsEditingTeams = false;
-        toast("Teams saved. Picker is ready.");
+        toast("Teams saved.");
       } catch (error) {
         console.error(error);
         toast(`Teams did not save: ${error.message}`);
@@ -1778,19 +1516,18 @@
       URL.revokeObjectURL(url);
     }
 
+    function switchTab(pageId) {
+      $$(".tab").forEach(item => item.classList.toggle("active", item.dataset.page === pageId));
+      $$(".page").forEach(page => page.classList.remove("active"));
+      $("#" + pageId).classList.add("active");
+    }
+
     $$(".tab").forEach(tab => {
-      tab.addEventListener("click", () => {
-        $$(".tab").forEach(item => item.classList.remove("active"));
-        $$(".page").forEach(page => page.classList.remove("active"));
-        tab.classList.add("active");
-        $("#" + tab.dataset.page).classList.add("active");
-      });
+      tab.addEventListener("click", () => switchTab(tab.dataset.page));
     });
 
-    elements.pickBtn.addEventListener("click", pickRandomTeam);
-    elements.personName.addEventListener("keydown", event => {
-      if (event.key === "Enter") pickRandomTeam();
-    });
+    document.getElementById("goFixturesBtn").addEventListener("click", () => switchTab("fixturesPage"));
+    document.getElementById("goBracketsBtn").addEventListener("click", () => switchTab("bracketPage"));
 
     async function unlockAdmin() {
       const entered = elements.adminPin.value.trim();
@@ -1808,8 +1545,7 @@
           elements.adminPin.value = "";
           elements.adminLock.style.display = "none";
           elements.adminContent.style.display = "block";
-          renderAccessState();
-          toast("Admin unlocked. Picker is now live.");
+          toast("Admin unlocked.");
         } else {
           toast("Wrong PIN.");
         }
@@ -2122,7 +1858,7 @@
       });
 
       if (!filtered.length) {
-        list.innerHTML = `<div class="fixtures-empty">No fixtures match this filter. ${fixtureFilter === "picked" ? "Make some picks first!" : ""}</div>`;
+        list.innerHTML = `<div class="fixtures-empty">No fixtures match this filter.</div>`;
         return;
       }
 
@@ -2219,20 +1955,16 @@
 
     boot();
 
-    // Refresh "Today's matches" and lock countdown every minute so the page
-    // stays accurate without a manual reload.
+    // Refresh "Today's matches" every minute so the page stays accurate
+    // without a manual reload (e.g. when the date ticks over at midnight).
     setInterval(() => {
       renderToday();
-      renderLockBanner();
-      renderAccessState();
     }, 60 * 1000);
   </script>
   <!-- ============================================================
   GXO WORLD CUP — PRIZE POT POPUP
-  Paste this ENTIRE block into index.html, just above </body>.
-  It is 100% self-contained: no changes needed anywhere else.
-  The pot amount inside the popup mirrors your live #potAmount
-  element automatically, so it updates in real time.
+  Self-contained: mirrors the live #potAmount element automatically,
+  so it updates in real time.
 ============================================================= -->
 <style>
   .wcpop-overlay {
@@ -2459,15 +2191,16 @@
     <div class="wcpop-confetti" id="wcpopConfetti"></div>
     <button class="wcpop-close" id="wcpopClose" aria-label="Close">✕</button>
     <div class="wcpop-trophy">🏆</div>
-    <div class="wcpop-eyebrow" id="wcpopTitle">Current Prize Pot</div>
+    <div class="wcpop-eyebrow" id="wcpopTitle">Final Prize Pot</div>
     <div class="wcpop-amount" id="wcpopAmount">£0</div>
-    <div class="wcpop-entries" id="wcpopEntries">Live · grows with every entry</div>
+    <div class="wcpop-entries" id="wcpopEntries">Entries closed · draw complete</div>
     <div class="wcpop-divider"></div>
     <p class="wcpop-message">
-      Fancy your chances? <b>Speak to a lead team member</b> to get your name
-      in the draw — every entry is just <b>£2</b> and the winner takes half the pot with the other half going to Andys Man Club.
+      <b>It's game time!</b> Entries are closed and the draw is final.
+      The winner takes <b>half the pot</b>, with the other half going to
+      <b>Andy's Man Club</b>. Check the fixtures and cheer your team on!
     </p>
-    <button class="wcpop-cta" id="wcpopCta">Let's go ⚽</button>
+    <button class="wcpop-cta" id="wcpopCta">See today's matches ⚽</button>
     <div class="wcpop-smallprint">GXO World Cup Sweepstake · 11 June – 19 July 2026</div>
   </div>
 </div>
@@ -2488,7 +2221,7 @@
         amountEl.textContent = sourceAmount.textContent.trim();
       }
       if (sourceEntries && sourceEntries.textContent.trim()) {
-        entriesEl.textContent = sourceEntries.textContent.trim() + " · winner takes the pot";
+        entriesEl.textContent = sourceEntries.textContent.trim() + " · entries closed";
       }
     }
 
