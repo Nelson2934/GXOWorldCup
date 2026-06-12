@@ -1880,17 +1880,21 @@
     let liveScores = {}; // "home|away" (canonical, lowercase) -> { hs, as, state, detail }
 
     async function fetchLiveScores() {
-      const now = new Date();
-      const yyyy = now.getFullYear();
-      const mm = String(now.getMonth() + 1).padStart(2, "0");
-      const dd = String(now.getDate()).padStart(2, "0");
-      const todayKey = `${yyyy}-${mm}-${dd}`;
+      // ESPN's "dates" parameter works on US dates, so a single UK date misses
+      // early-morning UK kick-offs. Fetch a rolling window instead:
+      // ~1.5 days back (covers yesterday's results) to 1 day ahead.
+      const fmt = d => `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
+      const isoFmt = d => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+      const start = new Date(Date.now() - 36 * 3600 * 1000);
+      const end = new Date(Date.now() + 24 * 3600 * 1000);
 
       // Only bother during the tournament window
-      if (!FIXTURES.some(f => f.date === todayKey)) return;
+      const startIso = isoFmt(start);
+      const endIso = isoFmt(end);
+      if (!FIXTURES.some(f => f.date >= startIso && f.date <= endIso)) return;
 
       try {
-        const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${yyyy}${mm}${dd}`);
+        const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${fmt(start)}-${fmt(end)}&limit=100`);
         if (!res.ok) return;
         const data = await res.json();
         const map = {};
@@ -1904,12 +1908,13 @@
           map[key] = {
             hs: home.score,
             as: away.score,
-            state: ev.status && ev.status.type ? ev.status.type.state : "pre", // pre | in | post
-            detail: (ev.status && ev.status.type && ev.status.type.shortDetail) || ""
+            state: (comp.status && comp.status.type && comp.status.type.state) || (ev.status && ev.status.type && ev.status.type.state) || "pre", // pre | in | post
+            detail: (comp.status && comp.status.displayClock) || (ev.status && ev.status.type && ev.status.type.shortDetail) || ""
           };
         });
         liveScores = map;
         renderToday();
+        renderFixtures();
       } catch (e) {
         // Scores are a bonus — fail silently and the page works as before.
         console.warn("Live scores unavailable:", e);
@@ -2027,7 +2032,44 @@
         `;
       }).join("");
 
-      elements.todayMatches.innerHTML = html;
+      // Yesterday's results (shown once scores are loaded)
+      const yest = new Date(now.getTime() - 86400000);
+      const yKey = `${yest.getFullYear()}-${String(yest.getMonth() + 1).padStart(2, "0")}-${String(yest.getDate()).padStart(2, "0")}`;
+      const yesterdayRows = FIXTURES
+        .filter(f => f.date === yKey && f.stage === "group")
+        .map(f => ({ f, s: scoreFor(f.home, f.away) }))
+        .filter(x => x.s && (x.s.state === "post" || x.s.state === "in"))
+        .map(({ f, s }) => {
+          const hN = normaliseTeam(f.home);
+          const aN = normaliseTeam(f.away);
+          const hP = pickedTeams.has(hN);
+          const aP = pickedTeams.has(aN);
+          const hHtml = hP ? `<span class="picked">${flagFor(f.home)}${escapeHtml(f.home)}</span>` : `${flagFor(f.home)}${escapeHtml(f.home)}`;
+          const aHtml = aP ? `<span class="picked">${flagFor(f.away)}${escapeHtml(f.away)}</span>` : `${flagFor(f.away)}${escapeHtml(f.away)}`;
+          const sep = s.state === "in"
+            ? `<span class="match-score live">${escapeHtml(s.hs)} – ${escapeHtml(s.as)}</span>`
+            : `<span class="match-score ft">${escapeHtml(s.hs)} – ${escapeHtml(s.as)}</span>`;
+          const status = s.state === "in" ? `<span class="live-tag">Live</span> ${escapeHtml(s.detail)}` : "Full time";
+          return `
+            <div class="today-match ${(hP || aP) ? "has-pick" : ""}">
+              <div class="today-match-time">${escapeHtml(f.time)}</div>
+              <div>
+                <div class="today-match-teams">${hHtml} ${sep} ${aHtml}</div>
+                <div class="today-pickers">${status}</div>
+              </div>
+              <div class="today-match-meta">${f.group ? "Group " + escapeHtml(f.group) + " · " : ""}${escapeHtml(f.venue)}</div>
+            </div>
+          `;
+        });
+
+      let yesterdayHtml = "";
+      if (yesterdayRows.length) {
+        yesterdayHtml = `<div class="small" style="margin:0 0 2px; text-transform:uppercase; letter-spacing:1.2px; font-weight:900;">Yesterday's results</div>`
+          + yesterdayRows.join("")
+          + `<div class="small" style="margin:10px 0 2px; text-transform:uppercase; letter-spacing:1.2px; font-weight:900;">Today</div>`;
+      }
+
+      elements.todayMatches.innerHTML = yesterdayHtml + html;
 
       // Update "our games" badge
       if (ourCount > 0) {
@@ -2092,8 +2134,17 @@
       const homeHtml = homePicked ? `<span class="picked">${homeFlag}${escapeHtml(match.home)}</span>` : `${homeFlag}${escapeHtml(match.home)}`;
       const awayHtml = awayPicked ? `<span class="picked">${awayFlag}${escapeHtml(match.away)}</span>` : `${awayFlag}${escapeHtml(match.away)}`;
 
+      // Live / full-time score if we have one for this match
+      const score = match.stage === "group" ? scoreFor(match.home, match.away) : null;
+      let fxSep = `<span class="small">vs</span>`;
+      if (score && score.state === "in") {
+        fxSep = `<span class="match-score live">${escapeHtml(score.hs)} – ${escapeHtml(score.as)}</span>`;
+      } else if (score && score.state === "post") {
+        fxSep = `<span class="match-score ft">${escapeHtml(score.hs)} – ${escapeHtml(score.as)}</span>`;
+      }
+
       const matchup = match.stage === "group"
-        ? `${homeHtml} <span class="small">vs</span> ${awayHtml}`
+        ? `${homeHtml} ${fxSep} ${awayHtml}`
         : `<b>${escapeHtml(match.home)}</b> <span class="small">— ${escapeHtml(match.away)}</span>`;
 
       const groupTag = match.group ? `Group ${match.group} · ` : "";
