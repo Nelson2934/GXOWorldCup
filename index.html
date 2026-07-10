@@ -411,6 +411,28 @@
       color: #fff;
     }
 
+    /* Knocked-out teams */
+    .chip.out {
+      opacity: .45;
+      text-decoration: line-through;
+      text-decoration-color: rgba(255, 77, 77, 0.8);
+    }
+
+    .team-line.eliminated { opacity: .42; }
+
+    .team-line.eliminated > span:first-child {
+      text-decoration: line-through;
+      text-decoration-color: rgba(255, 77, 77, 0.85);
+    }
+
+    .badge.out {
+      background: rgba(255, 77, 77, 0.18);
+      border: 1px solid rgba(255, 77, 77, 0.5);
+      color: #ff9a9a;
+      font-size: 11px;
+      letter-spacing: .5px;
+    }
+
     .owes-badge {
       display: inline-block;
       margin-top: 6px;
@@ -1037,14 +1059,14 @@
             </div>
             <div class="stat-row">
               <div class="stat"><span>Total Entries</span><b id="totalPicks">0</b></div>
-              <div class="stat"><span>Teams Held</span><b id="teamsUsed">0</b></div>
+              <div class="stat"><span>Teams Still In</span><b id="teamsUsed">0</b></div>
               <div class="stat"><span>Players In</span><b id="playersCount">0</b></div>
             </div>
           </div>
 
           <div class="panel">
             <h2>Live Board</h2>
-            <p>Everyone in the sweepstake, grouped by person. Each chip is one £2 entry.</p>
+            <p>Everyone in the sweepstake, grouped by person. Each chip is one £2 entry. Knocked-out teams are struck through.</p>
             <div class="leaderboard" id="leaderboard"></div>
           </div>
         </div>
@@ -1053,10 +1075,11 @@
       <section id="bracketPage" class="page">
         <div class="panel">
           <h2>Team Brackets</h2>
-          <p>Grouped by World Cup group. The number next to each team shows how many entries hold that team.</p>
+          <p>Grouped by World Cup group. The number next to each team shows how many entries hold that team. Teams that have gone out are marked OUT.</p>
           <div class="toolbar">
             <button class="primary" id="sortGroupBtn">Group View</button>
             <button id="sortCountBtn">Most Picked</button>
+            <button id="sortAliveBtn">Still In</button>
           </div>
           <div class="groups" id="groups"></div>
         </div>
@@ -1088,7 +1111,7 @@
             </div>
           </div>
 
-          <p class="small" style="margin-top:16px;">Fixture list: Sky Sports / FIFA · live scores: ESPN · times shown in UK time (BST). Knockout fixtures use placeholder team labels (e.g. "Group A Winner") until the group stage concludes. <a href="https://www.skysports.com/world-cup-fixtures" target="_blank" rel="noopener noreferrer" style="color:var(--gold);">Open live source →</a></p>
+          <p class="small" style="margin-top:16px;">Fixture list: Sky Sports / FIFA · live scores and knockout ties: ESPN · times shown in UK time (BST). Knockout fixtures fill in with real teams as soon as ESPN publishes each draw. <a href="https://www.skysports.com/world-cup-fixtures" target="_blank" rel="noopener noreferrer" style="color:var(--gold);">Open live source →</a></p>
         </div>
       </section>
 
@@ -1200,8 +1223,11 @@
       "England": "gb-eng", "Croatia": "hr", "Ghana": "gh", "Panama": "pa"
     };
 
+    // Handles our names, ESPN's names, and the fixture-list variants.
     function flagFor(teamName) {
-      const code = TEAM_FLAGS[teamName];
+      const code = TEAM_FLAGS[teamName]
+        || TEAM_FLAGS[ESPN_NAME_ALIASES[teamName]]
+        || TEAM_FLAGS[normaliseTeam(teamName)];
       if (!code) return "";
       // h40 = 40px tall, retina-friendly via srcset
       return `<img class="flag" src="https://flagcdn.com/h40/${code}.png" srcset="https://flagcdn.com/h80/${code}.png 2x" alt="" loading="lazy">`;
@@ -1303,6 +1329,7 @@
       adminEntries: $("#adminEntries"),
       sortGroupBtn: $("#sortGroupBtn"),
       sortCountBtn: $("#sortCountBtn"),
+      sortAliveBtn: $("#sortAliveBtn"),
       toast: $("#toast")
     };
 
@@ -1326,7 +1353,7 @@
     }
 
     function escapeHtml(value) {
-      return String(value || "")
+      return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")
@@ -1348,8 +1375,9 @@
     function renderStats() {
       const used = new Set(entries.map(entry => entry.team));
       const players = new Set(entries.map(entry => String(entry.name || "").toLowerCase()));
+      const stillIn = [...used].filter(isAlive).length;
       elements.totalPicks.textContent = entries.length;
-      elements.teamsUsed.textContent = used.size;
+      elements.teamsUsed.textContent = knockoutsStarted ? `${stillIn}/${used.size}` : used.size;
       elements.playersCount.textContent = players.size;
     }
 
@@ -1400,13 +1428,18 @@
       elements.leaderboard.innerHTML = people.map(person => {
         const unpaid = person.picks.filter(p => p.paid === false).length;
         const owesHtml = unpaid > 0 ? `<div class="owes-badge">Owes £${unpaid * ENTRY_PRICE}</div>` : "";
+        const alive = person.picks.filter(p => isAlive(p.team)).length;
+        const aliveHtml = knockoutsStarted
+          ? `<div class="small" style="margin-top:6px;">${alive} of ${person.picks.length} still in</div>`
+          : "";
         return `
         <div class="entry-card person-card">
           <div>
             <div class="name">${escapeHtml(person.displayName)}</div>
             <div class="teams-chips">
-              ${person.picks.map(p => `<span class="chip ${p.paid === false ? "unpaid" : ""}">${flagFor(p.team)}${escapeHtml(p.team)}</span>`).join("")}
+              ${person.picks.map(p => `<span class="chip ${p.paid === false ? "unpaid" : ""} ${isAlive(p.team) ? "" : "out"}">${flagFor(p.team)}${escapeHtml(p.team)}</span>`).join("")}
             </div>
+            ${aliveHtml}
             ${owesHtml}
           </div>
           <div class="team-count">${person.picks.length} × £${ENTRY_PRICE}</div>
@@ -1430,6 +1463,21 @@
         return;
       }
 
+      if (bracketMode === "alive") {
+        const survivors = sortedTeams.filter(team => isAlive(team.name))
+          .sort((a, b) => (counts[b.name] || 0) - (counts[a.name] || 0) || a.name.localeCompare(b.name));
+        const body = survivors.length
+          ? survivors.map(team => teamLine(team, counts[team.name] || 0)).join("")
+          : `<div class="team-line"><span class="small">Knockout draw not published yet — every team is still in.</span></div>`;
+        elements.groups.innerHTML = `
+          <div class="group-card" style="grid-column:1/-1;">
+            <div class="group-title"><span>Still In</span><span>${survivors.length} teams</span></div>
+            ${body}
+          </div>
+        `;
+        return;
+      }
+
       const grouped = sortedTeams.reduce((acc, team) => {
         acc[team.group] = acc[team.group] || [];
         acc[team.group].push(team);
@@ -1445,11 +1493,12 @@
     }
 
     function teamLine(team, count) {
-      const badgeClass = count > 1 ? "hot" : count === 0 ? "empty" : "";
+      const out = !isAlive(team.name);
+      const badgeClass = out ? "out" : count > 1 ? "hot" : count === 0 ? "empty" : "";
       return `
-        <div class="team-line">
+        <div class="team-line ${out ? "eliminated" : ""}">
           <span>${flagFor(team.name)}${escapeHtml(team.name)}</span>
-          <span class="badge ${badgeClass}">${count}</span>
+          <span class="badge ${badgeClass}">${out ? "OUT" : count}</span>
         </div>
       `;
     }
@@ -1472,7 +1521,7 @@
         <div class="entry-card">
           <div>
             <div class="name">${escapeHtml(entry.name)}</div>
-            <div class="small">${escapeHtml(entry.group || "No group")} | ${escapeHtml(entry.team)}</div>
+            <div class="small">${escapeHtml(entry.group || "No group")} | ${escapeHtml(entry.team)}${isAlive(entry.team) ? "" : " · OUT"}</div>
             <span class="paid-status ${isUnpaid ? "no" : "yes"}">${isUnpaid ? "Not paid" : "Paid"}</span>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
@@ -1624,10 +1673,16 @@
         return;
       }
 
-      const rows = [["Name", "Team", "Group", "Entry Fee (£)"]];
-      entries.forEach(entry => rows.push([entry.name, entry.team, entry.group || "", ENTRY_PRICE]));
+      const rows = [["Name", "Team", "Group", "Entry Fee (£)", "Status"]];
+      entries.forEach(entry => rows.push([
+        entry.name,
+        entry.team,
+        entry.group || "",
+        ENTRY_PRICE,
+        knockoutsStarted ? (isAlive(entry.team) ? "Still in" : "Out") : "Group stage"
+      ]));
       rows.push([]);
-      rows.push(["TOTAL POT", "", "", entries.length * ENTRY_PRICE]);
+      rows.push(["TOTAL POT", "", "", entries.length * ENTRY_PRICE, ""]);
       const csv = rows.map(row => row.map(cell => `"${String(cell ?? "").replaceAll('"', '""')}"`).join(",")).join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
       const url = URL.createObjectURL(blob);
@@ -1699,23 +1754,21 @@
     elements.clearEntriesBtn.addEventListener("click", clearEntries);
     elements.exportCsvBtn.addEventListener("click", exportCsv);
 
-    elements.sortGroupBtn.addEventListener("click", () => {
-      bracketMode = "group";
-      elements.sortGroupBtn.classList.add("primary");
-      elements.sortCountBtn.classList.remove("primary");
+    function setBracketMode(mode) {
+      bracketMode = mode;
+      [elements.sortGroupBtn, elements.sortCountBtn, elements.sortAliveBtn].forEach(btn => btn.classList.remove("primary"));
+      ({ group: elements.sortGroupBtn, count: elements.sortCountBtn, alive: elements.sortAliveBtn })[mode].classList.add("primary");
       renderBrackets();
-    });
+    }
 
-    elements.sortCountBtn.addEventListener("click", () => {
-      bracketMode = "count";
-      elements.sortCountBtn.classList.add("primary");
-      elements.sortGroupBtn.classList.remove("primary");
-      renderBrackets();
-    });
+    elements.sortGroupBtn.addEventListener("click", () => setBracketMode("group"));
+    elements.sortCountBtn.addEventListener("click", () => setBracketMode("count"));
+    elements.sortAliveBtn.addEventListener("click", () => setBracketMode("alive"));
 
-    // === WORLD CUP 2026 FIXTURES ===
-    // All times UK time (BST). Group stage from Sky Sports / Soccergraph (verified).
-    // Knockout placeholders match the official Sky Sports schedule labels.
+    // === WORLD CUP 2026 GROUP-STAGE FIXTURES ===
+    // All times UK time (BST). From Sky Sports / Soccergraph (verified).
+    // Knockout rows below are fallbacks only — once ESPN publishes each draw,
+    // displayFixtures() swaps them for the real ties with real team names.
     const FIXTURES = [
       // ---------- GROUP STAGE ----------
       // Thursday 11 June
@@ -1809,34 +1862,28 @@
       { date: "2026-06-28", day: "Sun 28 Jun", time: "3:00am", stage: "group", group: "J", home: "Algeria", away: "Austria", venue: "Kansas City" },
       { date: "2026-06-28", day: "Sun 28 Jun", time: "3:00am", stage: "group", group: "J", home: "Jordan", away: "Argentina", venue: "Arlington" },
 
-      // ---------- KNOCKOUTS (team labels are placeholders — official Sky Sports format) ----------
-      // Round of 32: 28 June – 3 July
+      // ---------- KNOCKOUT FALLBACKS (replaced by live ESPN data when available) ----------
       { date: "2026-06-28", day: "Sun 28 Jun", time: "TBC", stage: "r32", home: "Round of 32", away: "Match 73 – Match 80", venue: "Various" },
       { date: "2026-06-29", day: "Mon 29 Jun", time: "TBC", stage: "r32", home: "Round of 32", away: "Match 81 – Match 84", venue: "Various" },
       { date: "2026-06-30", day: "Tue 30 Jun", time: "TBC", stage: "r32", home: "Round of 32", away: "Match 85 – Match 88", venue: "Various" },
       { date: "2026-07-01", day: "Wed 1 Jul", time: "TBC", stage: "r32", home: "Round of 32", away: "Match 89 – Match 92", venue: "Various" },
       { date: "2026-07-02", day: "Thu 2 Jul", time: "TBC", stage: "r32", home: "Round of 32", away: "Match 93 – Match 96", venue: "Various" },
       { date: "2026-07-03", day: "Fri 3 Jul", time: "TBC", stage: "r32", home: "Round of 32", away: "Final R32 matches", venue: "Various" },
-      // Round of 16: 4 – 7 July
       { date: "2026-07-04", day: "Sat 4 Jul", time: "TBC", stage: "r16", home: "Round of 16", away: "4 matches", venue: "Various" },
       { date: "2026-07-05", day: "Sun 5 Jul", time: "TBC", stage: "r16", home: "Round of 16", away: "4 matches", venue: "Various" },
       { date: "2026-07-06", day: "Mon 6 Jul", time: "TBC", stage: "r16", home: "Round of 16", away: "4 matches", venue: "Various" },
       { date: "2026-07-07", day: "Tue 7 Jul", time: "TBC", stage: "r16", home: "Round of 16", away: "4 matches", venue: "Various" },
-      // Quarter-finals: 9 – 11 July
       { date: "2026-07-09", day: "Thu 9 Jul", time: "9:00pm", stage: "qf", home: "Quarter-final", away: "Match 97", venue: "Foxborough" },
       { date: "2026-07-10", day: "Fri 10 Jul", time: "8:00pm", stage: "qf", home: "Quarter-final", away: "Match 98", venue: "Los Angeles" },
       { date: "2026-07-10", day: "Fri 10 Jul", time: "10:00pm", stage: "qf", home: "Quarter-final", away: "Match 99", venue: "Miami" },
       { date: "2026-07-11", day: "Sat 11 Jul", time: "2:00am", stage: "qf", home: "Quarter-final", away: "Match 100", venue: "Kansas City" },
-      // Semi-finals: 14 – 15 July
-      { date: "2026-07-14", day: "Tue 14 Jul", time: "8:00pm", stage: "sf", home: "Semi-final", away: "Match 101 — QF97 winner vs QF98 winner", venue: "Arlington" },
-      { date: "2026-07-15", day: "Wed 15 Jul", time: "8:00pm", stage: "sf", home: "Semi-final", away: "Match 102 — QF99 winner vs QF100 winner", venue: "Atlanta" },
-      // Third place play-off
+      { date: "2026-07-14", day: "Tue 14 Jul", time: "8:00pm", stage: "sf", home: "Semi-final", away: "Match 101", venue: "Arlington" },
+      { date: "2026-07-15", day: "Wed 15 Jul", time: "8:00pm", stage: "sf", home: "Semi-final", away: "Match 102", venue: "Atlanta" },
       { date: "2026-07-18", day: "Sat 18 Jul", time: "10:00pm", stage: "sf", home: "Third Place Play-off", away: "SF losers", venue: "Miami" },
-      // Final
       { date: "2026-07-19", day: "Sun 19 Jul", time: "8:00pm", stage: "final", home: "FINAL", away: "SF1 winner vs SF2 winner", venue: "MetLife Stadium, New Jersey" }
     ];
 
-    // Map team display names to the names used in the picker (handles minor variants)
+    // Map fixture-list display names onto the names used in the picker
     const FIXTURE_TEAM_ALIASES = {
       "Czech Republic": "Czechia",
       "Czechia": "Czechia",
@@ -1862,14 +1909,23 @@
       return FIXTURE_TEAM_ALIASES[name] || name;
     }
 
-    // === LIVE SCORES (ESPN public scoreboard — free, no API key) ===
-    // ESPN sometimes uses slightly different team names; map them to ours.
+    // =====================================================================
+    // LIVE DATA — ESPN public scoreboard (free, no API key)
+    // Gives us: live/full-time scores, the real knockout ties once each draw
+    // is published, and therefore who is still in the tournament.
+    // =====================================================================
+
     const ESPN_NAME_ALIASES = {
       "United States": "USA",
       "Democratic Republic of the Congo": "Congo DR",
-      "Republic of Ireland": "Ireland",
-      "Korea Republic": "Korea Republic",
-      "South Korea": "Korea Republic"
+      "South Korea": "Korea Republic",
+      "Czech Republic": "Czechia",
+      "Cape Verde": "Cabo Verde",
+      "Ivory Coast": "Côte d'Ivoire",
+      "Curacao": "Curaçao",
+      "Turkiye": "Türkiye",
+      "Iran": "IR Iran",
+      "Bosnia & Herzegovina": "Bosnia and Herzegovina"
     };
 
     function canonTeam(name) {
@@ -1877,58 +1933,169 @@
       return normaliseTeam(mapped).toLowerCase().trim();
     }
 
-    let liveScores = {}; // "home|away" (canonical, lowercase) -> { hs, as, state, detail }
+    const ESPN_URL = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
+
+    let liveScores = {};        // "home|away" (canonical) -> score object
+    let knockoutFixtures = [];  // real knockout ties, straight from ESPN
+    let aliveTeams = new Set(); // canonical names still in the tournament
+    let knockoutsStarted = false;
+
+    const pad = n => String(n).padStart(2, "0");
+    const localKey  = iso => { const d = new Date(iso); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+    const localDay  = iso => new Date(iso).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+    const localTime = iso => new Date(iso).toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true }).replace(/\s/g, "").toLowerCase();
+
+    // Order matters here: "Quarterfinal" also contains the word "final".
+    function stageFromNote(note) {
+      const n = (note || "").toLowerCase();
+      if (n.includes("group")) return "group";
+      if (n.includes("32")) return "r32";
+      if (n.includes("16")) return "r16";
+      if (n.includes("quarter")) return "qf";
+      if (n.includes("semi")) return "sf";
+      if (n.includes("third") || n.includes("3rd")) return "sf";
+      if (n.includes("final")) return "final";
+      return "r32";
+    }
+
+    function parseEspnEvent(ev) {
+      const comp = ev.competitions && ev.competitions[0];
+      if (!comp || !comp.competitors) return null;
+      const home = comp.competitors.find(c => c.homeAway === "home");
+      const away = comp.competitors.find(c => c.homeAway === "away");
+      if (!home || !away) return null;
+      const note = (comp.notes && comp.notes[0] && comp.notes[0].headline) || "";
+      const status = comp.status || ev.status || {};
+      return {
+        kickoff: ev.date,
+        note,
+        stage: stageFromNote(note),
+        home: home.team.displayName,
+        away: away.team.displayName,
+        hs: home.score,
+        as: away.score,
+        homePens: home.shootoutScore,
+        awayPens: away.shootoutScore,
+        venue: (comp.venue && comp.venue.fullName) || "TBC",
+        state: (status.type && status.type.state) || "pre",
+        detail: status.displayClock || (status.type && status.type.shortDetail) || ""
+      };
+    }
+
+    async function espnEvents(range) {
+      const res = await fetch(`${ESPN_URL}?dates=${range}&limit=100`);
+      if (!res.ok) throw new Error(`ESPN ${res.status}`);
+      const data = await res.json();
+      return (data.events || []).map(parseEspnEvent).filter(Boolean);
+    }
+
+    function indexScores(events) {
+      events.forEach(e => {
+        liveScores[`${canonTeam(e.home)}|${canonTeam(e.away)}`] = {
+          hs: e.hs, as: e.as, state: e.state, detail: e.detail,
+          homePens: e.homePens, awayPens: e.awayPens
+        };
+      });
+    }
+
+    // A team is still in if it appears in a knockout tie and hasn't lost one.
+    // Anyone who never appears went out in the group stage.
+    function computeSurvivors() {
+      if (!knockoutFixtures.length) { knockoutsStarted = false; return; }
+      knockoutsStarted = true;
+
+      const alive = new Set();
+      const out = new Set();
+
+      knockoutFixtures.forEach(e => {
+        // Skip the third-place play-off, or it would resurrect both semi-final losers.
+        if (!/third|3rd/i.test(e.note)) {
+          alive.add(canonTeam(e.home));
+          alive.add(canonTeam(e.away));
+        }
+        if (e.state !== "post") return;
+
+        const hs = Number(e.hs), as = Number(e.as);
+        let loser = null;
+        if (hs !== as) {
+          loser = hs > as ? e.away : e.home;
+        } else if (e.homePens != null && e.awayPens != null && Number(e.homePens) !== Number(e.awayPens)) {
+          loser = Number(e.homePens) > Number(e.awayPens) ? e.away : e.home;
+        }
+        if (loser) out.add(canonTeam(loser));
+      });
+
+      out.forEach(t => alive.delete(t)); // runs last, so a beaten team stays beaten
+      aliveTeams = alive;
+    }
+
+    function isAlive(teamName) {
+      return !knockoutsStarted || aliveTeams.has(canonTeam(teamName));
+    }
 
     async function fetchLiveScores() {
-      // ESPN's "dates" parameter works on US dates, so a single UK date misses
-      // early-morning UK kick-offs. Fetch a rolling window instead:
-      // ~1.5 days back (covers yesterday's results) to 1 day ahead.
-      const fmt = d => `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
-      const isoFmt = d => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
-      const start = new Date(Date.now() - 36 * 3600 * 1000);
-      const end = new Date(Date.now() + 24 * 3600 * 1000);
-
-      // Only bother during the tournament window
-      const startIso = isoFmt(start);
-      const endIso = isoFmt(end);
-      if (!FIXTURES.some(f => f.date >= startIso && f.date <= endIso)) return;
-
       try {
-        const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${fmt(start)}-${fmt(end)}&limit=100`);
-        if (!res.ok) return;
-        const data = await res.json();
-        const map = {};
-        (data.events || []).forEach(ev => {
-          const comp = ev.competitions && ev.competitions[0];
-          if (!comp || !comp.competitors) return;
-          const home = comp.competitors.find(c => c.homeAway === "home");
-          const away = comp.competitors.find(c => c.homeAway === "away");
-          if (!home || !away) return;
-          const key = `${canonTeam(home.team.displayName)}|${canonTeam(away.team.displayName)}`;
-          map[key] = {
-            hs: home.score,
-            as: away.score,
-            state: (comp.status && comp.status.type && comp.status.type.state) || (ev.status && ev.status.type && ev.status.type.state) || "pre", // pre | in | post
-            detail: (comp.status && comp.status.displayClock) || (ev.status && ev.status.type && ev.status.type.shortDetail) || ""
-          };
-        });
-        liveScores = map;
-        renderToday();
-        renderFixtures();
+        // Two calls: ESPN caps each response, and 104 matches won't fit in one.
+        const [groupEvents, koEvents] = await Promise.all([
+          espnEvents("20260611-20260628").catch(() => []),
+          espnEvents("20260628-20260720").catch(() => [])
+        ]);
+
+        if (!groupEvents.length && !koEvents.length) return;
+
+        liveScores = {};
+        indexScores(groupEvents);
+        indexScores(koEvents);
+
+        knockoutFixtures = koEvents
+          .filter(e => e.stage !== "group")
+          .sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff));
+
+        computeSurvivors();
+        renderAll();
       } catch (e) {
-        // Scores are a bonus — fail silently and the page works as before.
-        console.warn("Live scores unavailable:", e);
+        // Scores are a bonus — fail quietly and the page still works.
+        console.warn("Live data unavailable:", e);
       }
     }
 
     function scoreFor(homeName, awayName) {
-      const h = canonTeam(homeName);
-      const a = canonTeam(awayName);
+      const h = canonTeam(homeName), a = canonTeam(awayName);
       const direct = liveScores[`${h}|${a}`];
       if (direct) return direct;
-      const reversed = liveScores[`${a}|${h}`];
-      if (reversed) return { ...reversed, hs: reversed.as, as: reversed.hs };
+      const rev = liveScores[`${a}|${h}`];
+      if (rev) return { ...rev, hs: rev.as, as: rev.hs, homePens: rev.awayPens, awayPens: rev.homePens };
       return null;
+    }
+
+    // The bit between two team names: "vs", a live score, or a full-time score.
+    function scoreChip(score) {
+      if (!score || score.state === "pre") return `<span class="small">vs</span>`;
+      if (score.state === "in") {
+        return `<span class="match-score live">${escapeHtml(score.hs)} – ${escapeHtml(score.as)}</span>`;
+      }
+      const pens = (score.homePens != null && score.awayPens != null && Number(score.hs) === Number(score.as))
+        ? ` <span class="small">(${escapeHtml(score.homePens)}–${escapeHtml(score.awayPens)} pens)</span>`
+        : "";
+      return `<span class="match-score ft">${escapeHtml(score.hs)} – ${escapeHtml(score.as)}</span>${pens}`;
+    }
+
+    // Curated group fixtures + real knockout ties from ESPN.
+    // Falls back to the hardcoded placeholders if ESPN is unreachable.
+    function displayFixtures() {
+      if (!knockoutFixtures.length) return FIXTURES;
+      const groupFx = FIXTURES.filter(f => f.stage === "group");
+      const koFx = knockoutFixtures.map(e => ({
+        date: localKey(e.kickoff),
+        day: localDay(e.kickoff),
+        time: localTime(e.kickoff),
+        stage: e.stage,
+        home: e.home,
+        away: e.away,
+        venue: e.venue
+      }));
+      // Array.sort is stable, so each block keeps its internal order.
+      return [...groupFx, ...koFx].sort((a, b) => a.date.localeCompare(b.date));
     }
 
     const STAGE_LABELS = {
@@ -1942,18 +2109,66 @@
 
     let fixtureFilter = "all"; // all | picked | group | knockout
 
+    function matchRow(match, pickersByTeam, pickedTeams) {
+      const homeN = normaliseTeam(match.home);
+      const awayN = normaliseTeam(match.away);
+      const homePicked = pickedTeams.has(homeN);
+      const awayPicked = pickedTeams.has(awayN);
+      const hasPick = homePicked || awayPicked;
+
+      const homeHtml = homePicked
+        ? `<span class="picked">${flagFor(match.home)}${escapeHtml(match.home)}</span>`
+        : `${flagFor(match.home)}${escapeHtml(match.home)}`;
+      const awayHtml = awayPicked
+        ? `<span class="picked">${flagFor(match.away)}${escapeHtml(match.away)}</span>`
+        : `${flagFor(match.away)}${escapeHtml(match.away)}`;
+
+      const score = scoreFor(match.home, match.away);
+
+      let statusLine = "";
+      if (score && score.state === "in") {
+        statusLine = `<div class="today-pickers"><span class="live-tag">Live</span> ${escapeHtml(score.detail)}</div>`;
+      } else if (score && score.state === "post") {
+        statusLine = `<div class="today-pickers">Full time</div>`;
+      }
+
+      let pickersLine = "";
+      if (hasPick) {
+        const names = [];
+        if (homePicked) names.push(...pickersByTeam[homeN].map(n => `<b>${escapeHtml(n)}</b> (${escapeHtml(match.home)})`));
+        if (awayPicked) names.push(...pickersByTeam[awayN].map(n => `<b>${escapeHtml(n)}</b> (${escapeHtml(match.away)})`));
+        pickersLine = `<div class="today-pickers">${names.join(" · ")}</div>`;
+      }
+
+      const tag = match.stage === "group" && match.group ? `Group ${match.group}` : STAGE_LABELS[match.stage];
+
+      return {
+        hasPick,
+        html: `
+          <div class="today-match ${hasPick ? "has-pick" : ""}">
+            <div class="today-match-time">${escapeHtml(match.time)}</div>
+            <div>
+              <div class="today-match-teams">${homeHtml} ${scoreChip(score)} ${awayHtml}</div>
+              ${statusLine}
+              ${pickersLine}
+            </div>
+            <div class="today-match-meta">${escapeHtml(tag)} · ${escapeHtml(match.venue)}</div>
+          </div>
+        `
+      };
+    }
+
     function renderToday() {
       const widget = elements.todayWidget;
       if (!widget) return;
 
-      // Get today's date in YYYY-MM-DD (local time)
       const now = new Date();
-      const yyyy = now.getFullYear();
-      const mm = String(now.getMonth() + 1).padStart(2, "0");
-      const dd = String(now.getDate()).padStart(2, "0");
-      const todayKey = `${yyyy}-${mm}-${dd}`;
+      const todayKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+      const yest = new Date(now.getTime() - 86400000);
+      const yKey = `${yest.getFullYear()}-${pad(yest.getMonth() + 1)}-${pad(yest.getDate())}`;
 
-      const todays = FIXTURES.filter(f => f.date === todayKey);
+      const fixtures = displayFixtures();
+      const todays = fixtures.filter(f => f.date === todayKey);
 
       // Hide the widget entirely outside the tournament window
       if (!todays.length) {
@@ -1962,10 +2177,7 @@
       }
 
       widget.style.display = "block";
-
-      // Pretty date label
-      const prettyDate = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-      elements.todayDate.textContent = prettyDate;
+      elements.todayDate.textContent = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
       // Map team -> array of pickers (case-preserving display names)
       const pickersByTeam = {};
@@ -1974,104 +2186,28 @@
         if (!pickersByTeam[norm]) pickersByTeam[norm] = [];
         pickersByTeam[norm].push(entry.name);
       });
-
       const pickedTeams = new Set(Object.keys(pickersByTeam));
 
       let ourCount = 0;
-      const html = todays.map(match => {
-        const homeN = normaliseTeam(match.home);
-        const awayN = normaliseTeam(match.away);
-        const homePicked = pickedTeams.has(homeN);
-        const awayPicked = pickedTeams.has(awayN);
-        const hasPick = match.stage === "group" && (homePicked || awayPicked);
-        if (hasPick) ourCount += 1;
-
-        const homeFlag = match.stage === "group" ? `${flagFor(match.home)}` : "";
-        const awayFlag = match.stage === "group" ? `${flagFor(match.away)}` : "";
-
-        const homeHtml = homePicked ? `<span class="picked">${homeFlag}${escapeHtml(match.home)}</span>` : `${homeFlag}${escapeHtml(match.home)}`;
-        const awayHtml = awayPicked ? `<span class="picked">${awayFlag}${escapeHtml(match.away)}</span>` : `${awayFlag}${escapeHtml(match.away)}`;
-
-        // Live score (if available) replaces the plain "vs"
-        const score = match.stage === "group" ? scoreFor(match.home, match.away) : null;
-        let separator = `<span class="small">vs</span>`;
-        let statusLine = "";
-        if (score && score.state === "in") {
-          separator = `<span class="match-score live">${escapeHtml(score.hs)} – ${escapeHtml(score.as)}</span>`;
-          statusLine = `<div class="today-pickers"><span class="live-tag">Live</span> ${escapeHtml(score.detail)}</div>`;
-        } else if (score && score.state === "post") {
-          separator = `<span class="match-score ft">${escapeHtml(score.hs)} – ${escapeHtml(score.as)}</span>`;
-          statusLine = `<div class="today-pickers">Full time</div>`;
-        }
-
-        const matchup = match.stage === "group"
-          ? `${homeHtml} ${separator} ${awayHtml}`
-          : `<b>${escapeHtml(match.home)}</b> <span class="small">— ${escapeHtml(match.away)}</span>`;
-
-        // Show pickers if any
-        let pickersLine = "";
-        if (hasPick) {
-          const names = [];
-          if (homePicked) names.push(...pickersByTeam[homeN].map(n => `<b>${escapeHtml(n)}</b> (${escapeHtml(match.home)})`));
-          if (awayPicked) names.push(...pickersByTeam[awayN].map(n => `<b>${escapeHtml(n)}</b> (${escapeHtml(match.away)})`));
-          pickersLine = `<div class="today-pickers">${names.join(" · ")}</div>`;
-        }
-
-        const tag = match.stage === "group" && match.group ? `Group ${match.group}` : STAGE_LABELS[match.stage];
-
-        return `
-          <div class="today-match ${hasPick ? "has-pick" : ""}">
-            <div class="today-match-time">${escapeHtml(match.time)}</div>
-            <div>
-              <div class="today-match-teams">${matchup}</div>
-              ${statusLine}
-              ${pickersLine}
-            </div>
-            <div class="today-match-meta">${escapeHtml(tag)} · ${escapeHtml(match.venue)}</div>
-          </div>
-        `;
+      const todayHtml = todays.map(match => {
+        const row = matchRow(match, pickersByTeam, pickedTeams);
+        if (row.hasPick) ourCount += 1;
+        return row.html;
       }).join("");
 
-      // Yesterday's results (shown once scores are loaded)
-      const yest = new Date(now.getTime() - 86400000);
-      const yKey = `${yest.getFullYear()}-${String(yest.getMonth() + 1).padStart(2, "0")}-${String(yest.getDate()).padStart(2, "0")}`;
-      const yesterdayRows = FIXTURES
-        .filter(f => f.date === yKey && f.stage === "group")
+      // Yesterday's results, once scores have loaded
+      const yesterdayRows = fixtures
+        .filter(f => f.date === yKey)
         .map(f => ({ f, s: scoreFor(f.home, f.away) }))
         .filter(x => x.s && (x.s.state === "post" || x.s.state === "in"))
-        .map(({ f, s }) => {
-          const hN = normaliseTeam(f.home);
-          const aN = normaliseTeam(f.away);
-          const hP = pickedTeams.has(hN);
-          const aP = pickedTeams.has(aN);
-          const hHtml = hP ? `<span class="picked">${flagFor(f.home)}${escapeHtml(f.home)}</span>` : `${flagFor(f.home)}${escapeHtml(f.home)}`;
-          const aHtml = aP ? `<span class="picked">${flagFor(f.away)}${escapeHtml(f.away)}</span>` : `${flagFor(f.away)}${escapeHtml(f.away)}`;
-          const sep = s.state === "in"
-            ? `<span class="match-score live">${escapeHtml(s.hs)} – ${escapeHtml(s.as)}</span>`
-            : `<span class="match-score ft">${escapeHtml(s.hs)} – ${escapeHtml(s.as)}</span>`;
-          const status = s.state === "in" ? `<span class="live-tag">Live</span> ${escapeHtml(s.detail)}` : "Full time";
-          return `
-            <div class="today-match ${(hP || aP) ? "has-pick" : ""}">
-              <div class="today-match-time">${escapeHtml(f.time)}</div>
-              <div>
-                <div class="today-match-teams">${hHtml} ${sep} ${aHtml}</div>
-                <div class="today-pickers">${status}</div>
-              </div>
-              <div class="today-match-meta">${f.group ? "Group " + escapeHtml(f.group) + " · " : ""}${escapeHtml(f.venue)}</div>
-            </div>
-          `;
-        });
+        .map(({ f }) => matchRow(f, pickersByTeam, pickedTeams).html);
 
-      let yesterdayHtml = "";
-      if (yesterdayRows.length) {
-        yesterdayHtml = `<div class="small" style="margin:0 0 2px; text-transform:uppercase; letter-spacing:1.2px; font-weight:900;">Yesterday's results</div>`
-          + yesterdayRows.join("")
-          + `<div class="small" style="margin:10px 0 2px; text-transform:uppercase; letter-spacing:1.2px; font-weight:900;">Today</div>`;
-      }
+      const heading = text => `<div class="small" style="margin:0 0 2px; text-transform:uppercase; letter-spacing:1.2px; font-weight:900;">${text}</div>`;
 
-      elements.todayMatches.innerHTML = yesterdayHtml + html;
+      elements.todayMatches.innerHTML = yesterdayRows.length
+        ? heading("Yesterday's results") + yesterdayRows.join("") + `<div style="height:8px;"></div>` + heading("Today") + todayHtml
+        : todayHtml;
 
-      // Update "our games" badge
       if (ourCount > 0) {
         elements.todayOurCount.textContent = `${ourCount} of ours playing`;
         elements.todayOurCount.classList.remove("zero");
@@ -2087,13 +2223,11 @@
 
       const pickedTeams = new Set(entries.map(e => normaliseTeam(e.team)));
 
-      const filtered = FIXTURES.filter(fixture => {
+      const filtered = displayFixtures().filter(fixture => {
         if (fixtureFilter === "group") return fixture.stage === "group";
         if (fixtureFilter === "knockout") return fixture.stage !== "group";
         if (fixtureFilter === "picked") {
-          const h = normaliseTeam(fixture.home);
-          const a = normaliseTeam(fixture.away);
-          return pickedTeams.has(h) || pickedTeams.has(a);
+          return pickedTeams.has(normaliseTeam(fixture.home)) || pickedTeams.has(normaliseTeam(fixture.away));
         }
         return true;
       });
@@ -2103,7 +2237,6 @@
         return;
       }
 
-      // Group by day
       const byDay = {};
       filtered.forEach(fixture => {
         if (!byDay[fixture.date]) byDay[fixture.date] = { day: fixture.day, matches: [] };
@@ -2122,31 +2255,18 @@
     }
 
     function renderFixtureRow(match, pickedTeams) {
-      const homeN = normaliseTeam(match.home);
-      const awayN = normaliseTeam(match.away);
-      const homePicked = pickedTeams.has(homeN);
-      const awayPicked = pickedTeams.has(awayN);
-      const highlight = match.stage === "group" && (homePicked || awayPicked);
+      const homePicked = pickedTeams.has(normaliseTeam(match.home));
+      const awayPicked = pickedTeams.has(normaliseTeam(match.away));
+      const highlight = homePicked || awayPicked;
 
-      const homeFlag = match.stage === "group" ? `${flagFor(match.home)}` : "";
-      const awayFlag = match.stage === "group" ? `${flagFor(match.away)}` : "";
+      const homeHtml = homePicked
+        ? `<span class="picked">${flagFor(match.home)}${escapeHtml(match.home)}</span>`
+        : `${flagFor(match.home)}${escapeHtml(match.home)}`;
+      const awayHtml = awayPicked
+        ? `<span class="picked">${flagFor(match.away)}${escapeHtml(match.away)}</span>`
+        : `${flagFor(match.away)}${escapeHtml(match.away)}`;
 
-      const homeHtml = homePicked ? `<span class="picked">${homeFlag}${escapeHtml(match.home)}</span>` : `${homeFlag}${escapeHtml(match.home)}`;
-      const awayHtml = awayPicked ? `<span class="picked">${awayFlag}${escapeHtml(match.away)}</span>` : `${awayFlag}${escapeHtml(match.away)}`;
-
-      // Live / full-time score if we have one for this match
-      const score = match.stage === "group" ? scoreFor(match.home, match.away) : null;
-      let fxSep = `<span class="small">vs</span>`;
-      if (score && score.state === "in") {
-        fxSep = `<span class="match-score live">${escapeHtml(score.hs)} – ${escapeHtml(score.as)}</span>`;
-      } else if (score && score.state === "post") {
-        fxSep = `<span class="match-score ft">${escapeHtml(score.hs)} – ${escapeHtml(score.as)}</span>`;
-      }
-
-      const matchup = match.stage === "group"
-        ? `${homeHtml} ${fxSep} ${awayHtml}`
-        : `<b>${escapeHtml(match.home)}</b> <span class="small">— ${escapeHtml(match.away)}</span>`;
-
+      const matchup = `${homeHtml} ${scoreChip(scoreFor(match.home, match.away))} ${awayHtml}`;
       const groupTag = match.group ? `Group ${match.group} · ` : "";
 
       return `
@@ -2206,12 +2326,8 @@
     boot();
     fetchLiveScores();
 
-    // Refresh "Today's matches" and live scores every minute so the page
-    // stays accurate without a manual reload.
-    setInterval(() => {
-      fetchLiveScores();
-      renderToday();
-    }, 60 * 1000);
+    // Refresh scores, knockout ties and survivors every minute.
+    setInterval(fetchLiveScores, 60 * 1000);
   </script>
   <!-- ============================================================
   GXO WORLD CUP — PRIZE POT POPUP
