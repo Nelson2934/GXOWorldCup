@@ -531,14 +531,25 @@
 
     /* ===== ENGLAND PAGE ===== */
     body.england-focus header { display: none; }
+    body.england-focus .app { padding-top: 12px; padding-bottom: 12px; }
+    body.england-focus .footer-note { display: none; }
+
+    /* When active, the England page fills the screen and lays out to fit */
+    #englandPage.page.active {
+      display: flex;
+      flex-direction: column;
+      height: calc(100dvh - 24px);
+    }
 
     .eng-back {
       display: none;
       align-items: center;
       gap: 8px;
-      margin: 0 0 14px;
-      padding: 10px 16px;
+      margin: 0 0 10px;
+      padding: 9px 15px;
       width: auto;
+      flex: 0 0 auto;
+      align-self: flex-start;
       background: rgba(255,255,255,0.1);
       border: 1px solid rgba(255,255,255,0.16);
       font-weight: 800;
@@ -564,6 +575,12 @@
         linear-gradient(160deg, #0a0d16 0%, #12060a 55%, #1a0406 100%);
     }
 
+    /* In focus mode the stage fills the leftover height */
+    body.england-focus .eng-stage {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
     /* St George cross, faint, behind everything */
     .eng-stage::before {
       content: "";
@@ -581,6 +598,25 @@
       z-index: 1;
       padding: 32px 26px 40px;
     }
+
+    /* Focus mode: fill the stage, centre the scoreboard, cap the fixtures */
+    body.england-focus .eng-inner {
+      height: 100%;
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    body.england-focus .eng-board { margin: auto 0 10px; }
+    body.england-focus .eng-fixtures {
+      flex: 0 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      margin-top: 18px;
+    }
+    /* score scales to the shorter of width/height so it never overflows */
+    body.england-focus .eng-score { font-size: clamp(48px, min(15vw, 20vh), 150px); }
+    body.england-focus .eng-side .flag { height: min(92px, 12vh) !important; }
 
     .eng-topline {
       display: flex;
