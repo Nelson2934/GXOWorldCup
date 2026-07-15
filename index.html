@@ -529,6 +529,305 @@
     .page { display: none; }
     .page.active { display: block; }
 
+    /* ===== ENGLAND PAGE ===== */
+    .tab-england.active {
+      background: linear-gradient(135deg, #d40000, #8a0000);
+      box-shadow: 0 16px 34px rgba(212, 0, 0, 0.35);
+    }
+
+    .eng-stage {
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: var(--shadow);
+      background:
+        radial-gradient(circle at 50% -10%, rgba(255,255,255,0.14), transparent 45%),
+        radial-gradient(circle at 15% 20%, rgba(212,0,0,0.28), transparent 40%),
+        radial-gradient(circle at 85% 25%, rgba(212,0,0,0.22), transparent 42%),
+        linear-gradient(160deg, #0a0d16 0%, #12060a 55%, #1a0406 100%);
+    }
+
+    /* St George cross, faint, behind everything */
+    .eng-stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.06;
+      background:
+        linear-gradient(to right, transparent calc(50% - 26px), #fff calc(50% - 26px), #fff calc(50% + 26px), transparent calc(50% + 26px)),
+        linear-gradient(to bottom, transparent calc(50% - 26px), #fff calc(50% - 26px), #fff calc(50% + 26px), transparent calc(50% + 26px));
+    }
+
+    .eng-inner {
+      position: relative;
+      z-index: 1;
+      padding: 32px 26px 40px;
+    }
+
+    .eng-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .eng-kicker {
+      font-family: Oswald, Inter, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #ff6b6b;
+    }
+
+    .eng-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08);
+      color: var(--gxo-muted);
+    }
+
+    .eng-status-pill.live {
+      background: rgba(25,195,125,0.2);
+      border-color: rgba(25,195,125,0.6);
+      color: var(--gxo-green);
+    }
+    .eng-status-pill.live::before {
+      content: "";
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--gxo-green);
+      box-shadow: 0 0 12px var(--gxo-green);
+      animation: potBlink 1.4s ease-in-out infinite;
+    }
+    .eng-status-pill.ft { color: #fff; background: rgba(255,255,255,0.14); }
+    .eng-status-pill.soon { color: var(--gold); border-color: rgba(255,209,102,0.5); background: rgba(255,209,102,0.14); }
+
+    .eng-stagetag {
+      font-family: Oswald, Inter, sans-serif;
+      font-size: 15px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gxo-white);
+      font-weight: 700;
+    }
+
+    /* The scoreboard */
+    .eng-board {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 14px;
+      margin: 26px 0 10px;
+    }
+
+    .eng-side {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      text-align: center;
+      min-width: 0;
+    }
+
+    .eng-side .flag {
+      height: 92px !important;
+      margin: 0 !important;
+      border-radius: 6px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1);
+    }
+
+    .eng-team-name {
+      font-family: Oswald, Inter, sans-serif;
+      font-size: clamp(20px, 3.4vw, 34px);
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+    }
+
+    .eng-team-name.is-eng { color: #fff; }
+    .eng-side.out .eng-team-name { text-decoration: line-through; text-decoration-color: #ff4d4d; opacity: .6; }
+
+    .eng-centre {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 0 6px;
+    }
+
+    .eng-score {
+      font-family: Oswald, Inter, sans-serif;
+      font-weight: 700;
+      font-size: clamp(64px, 15vw, 150px);
+      line-height: 0.85;
+      letter-spacing: -4px;
+      white-space: nowrap;
+      background: linear-gradient(180deg, #fff 30%, #ffd9d9 90%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 6px 26px rgba(255,80,80,0.3));
+    }
+
+    .eng-score.pending {
+      font-size: clamp(40px, 9vw, 90px);
+      letter-spacing: -1px;
+      color: var(--gxo-muted);
+      -webkit-text-fill-color: var(--gxo-muted);
+    }
+
+    .eng-clock {
+      font-family: Oswald, Inter, sans-serif;
+      font-size: 15px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--gxo-green);
+      font-weight: 700;
+      min-height: 18px;
+    }
+    .eng-clock.grey { color: var(--gxo-muted); }
+
+    .eng-pens {
+      font-size: 13px;
+      color: var(--gold);
+      font-weight: 800;
+      letter-spacing: .4px;
+    }
+
+    /* Countdown for upcoming games */
+    .eng-countdown {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin: 22px 0 6px;
+    }
+
+    .eng-cd-cell {
+      min-width: 74px;
+      padding: 14px 10px;
+      border-radius: 16px;
+      background: rgba(0,0,0,0.32);
+      border: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+    }
+
+    .eng-cd-num {
+      font-family: Oswald, Inter, sans-serif;
+      font-size: 40px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+    .eng-cd-label {
+      display: block;
+      margin-top: 6px;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gxo-muted);
+      font-weight: 800;
+    }
+
+    .eng-meta-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px 22px;
+      margin-top: 20px;
+      color: var(--gxo-muted);
+      font-size: 13px;
+    }
+    .eng-meta-row b { color: #fff; font-weight: 800; }
+
+    .eng-pickers {
+      margin: 26px auto 0;
+      max-width: 620px;
+      padding: 16px 18px;
+      border-radius: 16px;
+      background: rgba(255,209,102,0.1);
+      border: 1px solid rgba(255,209,102,0.3);
+      text-align: center;
+    }
+    .eng-pickers .lbl {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+    .eng-pickers .names { font-weight: 700; line-height: 1.7; }
+    .eng-pickers .names b { color: var(--gold); }
+
+    .eng-fixtures {
+      margin: 26px auto 0;
+      max-width: 720px;
+    }
+    .eng-fixtures h3 {
+      text-align: center;
+      font-family: Oswald, Inter, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-size: 15px;
+      color: var(--gxo-muted);
+      margin: 0 0 12px;
+    }
+
+    .eng-fx {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 11px 16px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 8px;
+    }
+    .eng-fx .fx-when { font-size: 12px; color: var(--gxo-muted); min-width: 92px; }
+    .eng-fx .fx-opp { font-weight: 800; }
+    .eng-fx .fx-res {
+      font-family: Oswald, Inter, sans-serif;
+      font-weight: 700;
+      letter-spacing: .5px;
+    }
+    .eng-fx .fx-res.win { color: var(--gxo-green); }
+    .eng-fx .fx-res.loss { color: #ff6b6b; }
+    .eng-fx .fx-res.draw { color: var(--gold); }
+
+    .eng-empty {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--gxo-muted);
+      font-size: 15px;
+    }
+
+    @media (max-width: 640px) {
+      .eng-inner { padding: 22px 14px 30px; }
+      .eng-board { gap: 6px; }
+      .eng-side .flag { height: 56px !important; }
+      .eng-team-name { font-size: 16px; }
+      .eng-score { letter-spacing: -2px; }
+      .eng-cd-cell { min-width: 60px; padding: 12px 6px; }
+      .eng-cd-num { font-size: 30px; }
+      .eng-fx { grid-template-columns: 1fr auto; }
+      .eng-fx .fx-when { grid-column: 1 / -1; min-width: 0; }
+    }
+
     .groups {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -1013,6 +1312,7 @@
       </div>
       <nav class="tabs">
         <button class="tab active" data-page="pickerPage">Matchday</button>
+        <button class="tab tab-england" data-page="englandPage">🏴󠁧󠁢󠁥󠁮󠁧󠁿 England</button>
         <button class="tab" data-page="bracketPage">Team Brackets</button>
         <button class="tab" data-page="fixturesPage">Fixtures</button>
         <button class="tab" data-page="adminPage">Admin</button>
@@ -1069,6 +1369,12 @@
             <p>Everyone in the sweepstake, grouped by person. Each chip is one £2 entry. Knocked-out teams are struck through.</p>
             <div class="leaderboard" id="leaderboard"></div>
           </div>
+        </div>
+      </section>
+
+      <section id="englandPage" class="page">
+        <div class="eng-stage" id="engStage">
+          <div class="eng-empty" id="engEmpty">Finding England's next match…</div>
         </div>
       </section>
 
@@ -1314,6 +1620,7 @@
       todayDate: $("#todayDate"),
       todayOurCount: $("#todayOurCount"),
       todayMatches: $("#todayMatches"),
+      engStage: $("#engStage"),
       adminPin: $("#adminPin"),
       loginBtn: $("#loginBtn"),
       adminLock: $("#adminLock"),
@@ -1565,6 +1872,7 @@
       renderAdmin();
       renderToday();
       renderFixtures();
+      renderEngland();
     }
 
     function snapshotToArray(snapshot) {
@@ -2216,6 +2524,220 @@
         elements.todayOurCount.classList.add("zero");
       }
     }
+
+    // ===== ENGLAND PAGE =====
+    const ENGLAND = "england"; // canonical
+    let engCountdownTarget = null; // ms timestamp of the next England kickoff, or null
+
+    function englandFixtures() {
+      return displayFixtures().filter(f =>
+        canonTeam(f.home) === ENGLAND || canonTeam(f.away) === ENGLAND
+      );
+    }
+
+    // Best guess at a real kickoff timestamp for a fixture, for countdown + sorting.
+    function fixtureKickoff(f) {
+      // Knockout ties from ESPN carry a real ISO time we can rebuild; group rows
+      // give us a date + a "8:00pm" style string.
+      const m = /^(\d{1,2}):(\d{2})(am|pm)$/i.exec((f.time || "").trim());
+      if (!m) return null;
+      let h = Number(m[1]) % 12;
+      if (/pm/i.test(m[3])) h += 12;
+      // Interpret the stored UK time as local browser time — close enough for a
+      // countdown, and correct for UK users which is who this is for.
+      return new Date(`${f.date}T${pad(h)}:${m[2]}:00`).getTime();
+    }
+
+    // Pick the one match to feature: a live England game wins; then today's;
+    // then the next upcoming; otherwise their most recent result.
+    function pickEnglandMatch(fixtures) {
+      const now = Date.now();
+      const todayKey = `${new Date().getFullYear()}-${pad(new Date().getMonth() + 1)}-${pad(new Date().getDate())}`;
+
+      const withScore = fixtures.map(f => ({ f, s: scoreFor(f.home, f.away), ko: fixtureKickoff(f) }));
+
+      const live = withScore.find(x => x.s && x.s.state === "in");
+      if (live) return { ...live, mode: "live" };
+
+      const today = withScore.find(x => x.f.date === todayKey);
+      if (today) {
+        if (today.s && today.s.state === "post") return { ...today, mode: "ft" };
+        return { ...today, mode: "upcoming" };
+      }
+
+      const upcoming = withScore
+        .filter(x => x.ko && x.ko > now)
+        .sort((a, b) => a.ko - b.ko)[0];
+      if (upcoming) return { ...upcoming, mode: "upcoming" };
+
+      const past = withScore
+        .filter(x => x.s && x.s.state === "post")
+        .sort((a, b) => (b.ko || 0) - (a.ko || 0))[0];
+      if (past) return { ...past, mode: "ft" };
+
+      const anyPending = withScore.sort((a, b) => (a.ko || Infinity) - (b.ko || Infinity))[0];
+      return anyPending ? { ...anyPending, mode: "upcoming" } : null;
+    }
+
+    function engStageLabel(f) {
+      if (f.stage === "group") return `Group ${f.group || "Stage"}`;
+      return { r32: "Round of 32", r16: "Round of 16", qf: "Quarter-final", sf: "Semi-final", final: "Final" }[f.stage] || "Knockout";
+    }
+
+    function renderEngland() {
+      const host = elements.engStage;
+      if (!host) return;
+
+      const fixtures = englandFixtures();
+      if (!fixtures.length) {
+        engCountdownTarget = null;
+        host.innerHTML = `<div class="eng-empty">England aren't in the fixture list — check back once the schedule loads.</div>`;
+        return;
+      }
+
+      const picked = pickEnglandMatch(fixtures);
+      if (!picked) {
+        engCountdownTarget = null;
+        host.innerHTML = `<div class="eng-empty">Couldn't find an England match to show.</div>`;
+        return;
+      }
+
+      const { f, s, mode, ko } = picked;
+      const englandIsHome = canonTeam(f.home) === ENGLAND;
+      const opponentName = englandIsHome ? f.away : f.home;
+      const englandOut = !isAlive("England");
+
+      // Score for the centre panel
+      let scoreHtml, clockHtml, pensHtml = "";
+      if (s && (s.state === "in" || s.state === "post")) {
+        scoreHtml = `<div class="eng-score">${escapeHtml(s.hs)} – ${escapeHtml(s.as)}</div>`;
+        if (mode === "live") {
+          clockHtml = `<div class="eng-clock">${escapeHtml(s.detail || "Live")}</div>`;
+        } else {
+          clockHtml = `<div class="eng-clock grey">Full time</div>`;
+        }
+        if (s.homePens != null && s.awayPens != null && Number(s.hs) === Number(s.as)) {
+          pensHtml = `<div class="eng-pens">Penalties: ${escapeHtml(s.homePens)} – ${escapeHtml(s.awayPens)}</div>`;
+        }
+      } else {
+        scoreHtml = `<div class="eng-score pending">vs</div>`;
+        clockHtml = `<div class="eng-clock grey">Kick-off ${escapeHtml(f.time || "TBC")}</div>`;
+      }
+
+      // Status pill
+      let pillClass = "soon", pillText = "Upcoming";
+      if (mode === "live") { pillClass = "live"; pillText = "Live"; }
+      else if (mode === "ft") { pillClass = "ft"; pillText = "Full time"; }
+
+      // Countdown (only for upcoming with a known kickoff)
+      engCountdownTarget = (mode === "upcoming" && ko && ko > Date.now()) ? ko : null;
+      const countdownHtml = engCountdownTarget
+        ? `<div class="eng-countdown" id="engCountdown">${countdownCells(engCountdownTarget - Date.now())}</div>`
+        : "";
+
+      // Who picked England in the sweepstake
+      const engPickers = entries.filter(e => canonTeam(e.team) === ENGLAND).map(e => e.name);
+      const pickersHtml = engPickers.length
+        ? `<div class="eng-pickers">
+             <div class="lbl">Riding on England (${engPickers.length} ${engPickers.length === 1 ? "entry" : "entries"})</div>
+             <div class="names">${engPickers.map(n => `<b>${escapeHtml(n)}</b>`).join(" · ")}</div>
+           </div>`
+        : `<div class="eng-pickers">
+             <div class="lbl">Sweepstake</div>
+             <div class="names small" style="color:var(--gxo-muted);">Nobody in the pool holds England.</div>
+           </div>`;
+
+      // England's full run of fixtures with results
+      const runHtml = fixtures.map(fx => {
+        const sc = scoreFor(fx.home, fx.away);
+        const isHome = canonTeam(fx.home) === ENGLAND;
+        const opp = isHome ? fx.away : fx.home;
+        let res = "";
+        if (sc && (sc.state === "post" || sc.state === "in")) {
+          const engGoals = isHome ? Number(sc.hs) : Number(sc.as);
+          const oppGoals = isHome ? Number(sc.as) : Number(sc.hs);
+          const cls = engGoals > oppGoals ? "win" : engGoals < oppGoals ? "loss" : "draw";
+          res = `<span class="fx-res ${cls}">${escapeHtml(engGoals)}–${escapeHtml(oppGoals)}</span>`;
+        } else {
+          res = `<span class="fx-res" style="color:var(--gxo-muted);">${escapeHtml(fx.time || "TBC")}</span>`;
+        }
+        return `
+          <div class="eng-fx">
+            <div class="fx-when">${escapeHtml(fx.day)}</div>
+            <div class="fx-opp">${flagFor(opp)}${escapeHtml(opp)} <span class="small">· ${engStageLabel(fx)}</span></div>
+            ${res}
+          </div>`;
+      }).join("");
+
+      const homeSideOut = englandIsHome ? englandOut : !isAlive(opponentName);
+      const awaySideOut = englandIsHome ? !isAlive(opponentName) : englandOut;
+
+      host.innerHTML = `
+        <div class="eng-inner">
+          <div class="eng-topline">
+            <div>
+              <div class="eng-kicker">England · ${escapeHtml(engStageLabel(f))}</div>
+              <div class="eng-stagetag">${escapeHtml(f.day)}</div>
+            </div>
+            <div class="eng-status-pill ${pillClass}">${escapeHtml(pillText)}</div>
+          </div>
+
+          <div class="eng-board">
+            <div class="eng-side ${homeSideOut ? "out" : ""}">
+              ${flagFor(f.home)}
+              <div class="eng-team-name ${canonTeam(f.home) === ENGLAND ? "is-eng" : ""}">${escapeHtml(f.home)}</div>
+            </div>
+            <div class="eng-centre">
+              ${scoreHtml}
+              ${clockHtml}
+              ${pensHtml}
+            </div>
+            <div class="eng-side ${awaySideOut ? "out" : ""}">
+              ${flagFor(f.away)}
+              <div class="eng-team-name ${canonTeam(f.away) === ENGLAND ? "is-eng" : ""}">${escapeHtml(f.away)}</div>
+            </div>
+          </div>
+
+          ${countdownHtml}
+
+          <div class="eng-meta-row">
+            <div>📍 <b>${escapeHtml(f.venue || "TBC")}</b></div>
+            <div>🕐 Kick-off <b>${escapeHtml(f.time || "TBC")}</b> UK</div>
+            ${englandOut ? `<div>❌ <b style="color:#ff6b6b;">Knocked out</b></div>` : `<div>✅ <b style="color:var(--gxo-green);">Still in</b></div>`}
+          </div>
+
+          ${pickersHtml}
+
+          <div class="eng-fixtures">
+            <h3>England's tournament</h3>
+            ${runHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    function countdownCells(ms) {
+      const total = Math.max(0, Math.floor(ms / 1000));
+      const d = Math.floor(total / 86400);
+      const h = Math.floor((total % 86400) / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const sec = total % 60;
+      const cell = (num, label) => `<div class="eng-cd-cell"><div class="eng-cd-num">${pad(num)}</div><span class="eng-cd-label">${label}</span></div>`;
+      return (d > 0 ? cell(d, "Days") : "") + cell(h, "Hrs") + cell(m, "Min") + cell(sec, "Sec");
+    }
+
+    // Tick the countdown every second without re-rendering the whole page.
+    setInterval(() => {
+      const box = document.getElementById("engCountdown");
+      if (!box || !engCountdownTarget) return;
+      const remaining = engCountdownTarget - Date.now();
+      if (remaining <= 0) {
+        // Kickoff reached — pull fresh scores and re-render.
+        fetchLiveScores();
+        return;
+      }
+      box.innerHTML = countdownCells(remaining);
+    }, 1000);
 
     function renderFixtures() {
       const list = document.getElementById("fixturesList");
