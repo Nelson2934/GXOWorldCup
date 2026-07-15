@@ -1688,6 +1688,15 @@
       ]);
     }
 
+    // Display-name overrides — these rename a team on screen without touching
+    // Firebase or the alias/flag maps. Add more entries here as needed.
+    const DISPLAY_OVERRIDES = {
+      "Argentina": "VARgentina"
+    };
+    function displayTeam(name) {
+      return DISPLAY_OVERRIDES[name] || name;
+    }
+
     function normalizeName(value) {
       return String(value || "").trim().replace(/\s+/g, " ");
     }
@@ -1777,7 +1786,7 @@
           <div>
             <div class="name">${escapeHtml(person.displayName)}</div>
             <div class="teams-chips">
-              ${person.picks.map(p => `<span class="chip ${p.paid === false ? "unpaid" : ""} ${isAlive(p.team) ? "" : "out"}">${flagFor(p.team)}${escapeHtml(p.team)}</span>`).join("")}
+              ${person.picks.map(p => `<span class="chip ${p.paid === false ? "unpaid" : ""} ${isAlive(p.team) ? "" : "out"}">${flagFor(p.team)}${escapeHtml(displayTeam(p.team))}</span>`).join("")}
             </div>
             ${aliveHtml}
             ${owesHtml}
@@ -1837,7 +1846,7 @@
       const badgeClass = out ? "out" : count > 1 ? "hot" : count === 0 ? "empty" : "";
       return `
         <div class="team-line ${out ? "eliminated" : ""}">
-          <span>${flagFor(team.name)}${escapeHtml(team.name)}</span>
+          <span>${flagFor(team.name)}${escapeHtml(displayTeam(team.name))}</span>
           <span class="badge ${badgeClass}">${out ? "OUT" : count}</span>
         </div>
       `;
@@ -1861,7 +1870,7 @@
         <div class="entry-card">
           <div>
             <div class="name">${escapeHtml(entry.name)}</div>
-            <div class="small">${escapeHtml(entry.group || "No group")} | ${escapeHtml(entry.team)}${isAlive(entry.team) ? "" : " · OUT"}</div>
+            <div class="small">${escapeHtml(entry.group || "No group")} | ${escapeHtml(displayTeam(entry.team))}${isAlive(entry.team) ? "" : " · OUT"}</div>
             <span class="paid-status ${isUnpaid ? "no" : "yes"}">${isUnpaid ? "Not paid" : "Paid"}</span>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
@@ -2470,11 +2479,11 @@
       const hasPick = homePicked || awayPicked;
 
       const homeHtml = homePicked
-        ? `<span class="picked">${flagFor(match.home)}${escapeHtml(match.home)}</span>`
-        : `${flagFor(match.home)}${escapeHtml(match.home)}`;
+        ? `<span class="picked">${flagFor(match.home)}${escapeHtml(displayTeam(match.home))}</span>`
+        : `${flagFor(match.home)}${escapeHtml(displayTeam(match.home))}`;
       const awayHtml = awayPicked
-        ? `<span class="picked">${flagFor(match.away)}${escapeHtml(match.away)}</span>`
-        : `${flagFor(match.away)}${escapeHtml(match.away)}`;
+        ? `<span class="picked">${flagFor(match.away)}${escapeHtml(displayTeam(match.away))}</span>`
+        : `${flagFor(match.away)}${escapeHtml(displayTeam(match.away))}`;
 
       const score = scoreFor(match.home, match.away);
 
@@ -2488,8 +2497,8 @@
       let pickersLine = "";
       if (hasPick) {
         const names = [];
-        if (homePicked) names.push(...pickersByTeam[homeN].map(n => `<b>${escapeHtml(n)}</b> (${escapeHtml(match.home)})`));
-        if (awayPicked) names.push(...pickersByTeam[awayN].map(n => `<b>${escapeHtml(n)}</b> (${escapeHtml(match.away)})`));
+        if (homePicked) names.push(...pickersByTeam[homeN].map(n => `<b>${escapeHtml(n)}</b> (${escapeHtml(displayTeam(match.home))})`));
+        if (awayPicked) names.push(...pickersByTeam[awayN].map(n => `<b>${escapeHtml(n)}</b> (${escapeHtml(displayTeam(match.away))})`));
         pickersLine = `<div class="today-pickers">${names.join(" · ")}</div>`;
       }
 
@@ -2701,7 +2710,7 @@
         return `
           <div class="eng-fx">
             <div class="fx-when">${escapeHtml(fx.day)}</div>
-            <div class="fx-opp">${flagFor(opp)}${escapeHtml(opp)} <span class="small">· ${engStageLabel(fx)}</span></div>
+            <div class="fx-opp">${flagFor(opp)}${escapeHtml(displayTeam(opp))} <span class="small">· ${engStageLabel(fx)}</span></div>
             ${res}
           </div>`;
       }).join("");
@@ -2722,7 +2731,7 @@
           <div class="eng-board">
             <div class="eng-side ${homeSideOut ? "out" : ""}">
               ${flagFor(f.home)}
-              <div class="eng-team-name ${canonTeam(f.home) === ENGLAND ? "is-eng" : ""}">${escapeHtml(f.home)}</div>
+              <div class="eng-team-name ${canonTeam(f.home) === ENGLAND ? "is-eng" : ""}">${escapeHtml(displayTeam(f.home))}</div>
             </div>
             <div class="eng-centre">
               ${scoreHtml}
@@ -2731,7 +2740,7 @@
             </div>
             <div class="eng-side ${awaySideOut ? "out" : ""}">
               ${flagFor(f.away)}
-              <div class="eng-team-name ${canonTeam(f.away) === ENGLAND ? "is-eng" : ""}">${escapeHtml(f.away)}</div>
+              <div class="eng-team-name ${canonTeam(f.away) === ENGLAND ? "is-eng" : ""}">${escapeHtml(displayTeam(f.away))}</div>
             </div>
           </div>
 
@@ -2817,11 +2826,11 @@
       const highlight = homePicked || awayPicked;
 
       const homeHtml = homePicked
-        ? `<span class="picked">${flagFor(match.home)}${escapeHtml(match.home)}</span>`
-        : `${flagFor(match.home)}${escapeHtml(match.home)}`;
+        ? `<span class="picked">${flagFor(match.home)}${escapeHtml(displayTeam(match.home))}</span>`
+        : `${flagFor(match.home)}${escapeHtml(displayTeam(match.home))}`;
       const awayHtml = awayPicked
-        ? `<span class="picked">${flagFor(match.away)}${escapeHtml(match.away)}</span>`
-        : `${flagFor(match.away)}${escapeHtml(match.away)}`;
+        ? `<span class="picked">${flagFor(match.away)}${escapeHtml(displayTeam(match.away))}</span>`
+        : `${flagFor(match.away)}${escapeHtml(displayTeam(match.away))}`;
 
       const matchup = `${homeHtml} ${scoreChip(scoreFor(match.home, match.away))} ${awayHtml}`;
       const groupTag = match.group ? `Group ${match.group} · ` : "";
