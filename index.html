@@ -530,6 +530,22 @@
     .page.active { display: block; }
 
     /* ===== ENGLAND PAGE ===== */
+    body.england-focus header { display: none; }
+
+    .eng-back {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 14px;
+      padding: 10px 16px;
+      width: auto;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.16);
+      font-weight: 800;
+      font-size: 14px;
+    }
+    body.england-focus .eng-back { display: inline-flex; }
+
     .tab-england.active {
       background: linear-gradient(135deg, #d40000, #8a0000);
       box-shadow: 0 16px 34px rgba(212, 0, 0, 0.35);
@@ -752,26 +768,6 @@
       font-size: 13px;
     }
     .eng-meta-row b { color: #fff; font-weight: 800; }
-
-    .eng-pickers {
-      margin: 26px auto 0;
-      max-width: 620px;
-      padding: 16px 18px;
-      border-radius: 16px;
-      background: rgba(255,209,102,0.1);
-      border: 1px solid rgba(255,209,102,0.3);
-      text-align: center;
-    }
-    .eng-pickers .lbl {
-      font-size: 11px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--gold);
-      font-weight: 900;
-      margin-bottom: 8px;
-    }
-    .eng-pickers .names { font-weight: 700; line-height: 1.7; }
-    .eng-pickers .names b { color: var(--gold); }
 
     .eng-fixtures {
       margin: 26px auto 0;
@@ -1373,6 +1369,7 @@
       </section>
 
       <section id="englandPage" class="page">
+        <button class="eng-back" id="engBackBtn">← Back to sweepstake</button>
         <div class="eng-stage" id="engStage">
           <div class="eng-empty" id="engEmpty">Finding England's next match…</div>
         </div>
@@ -2005,6 +2002,8 @@
       $$(".tab").forEach(item => item.classList.toggle("active", item.dataset.page === pageId));
       $$(".page").forEach(page => page.classList.remove("active"));
       $("#" + pageId).classList.add("active");
+      document.body.classList.toggle("england-focus", pageId === "englandPage");
+      window.scrollTo({ top: 0 });
     }
 
     $$(".tab").forEach(tab => {
@@ -2013,6 +2012,7 @@
 
     document.getElementById("goFixturesBtn").addEventListener("click", () => switchTab("fixturesPage"));
     document.getElementById("goBracketsBtn").addEventListener("click", () => switchTab("bracketPage"));
+    document.getElementById("engBackBtn").addEventListener("click", () => switchTab("pickerPage"));
 
     async function unlockAdmin() {
       const entered = elements.adminPin.value.trim();
@@ -2635,18 +2635,6 @@
         ? `<div class="eng-countdown" id="engCountdown">${countdownCells(engCountdownTarget - Date.now())}</div>`
         : "";
 
-      // Who picked England in the sweepstake
-      const engPickers = entries.filter(e => canonTeam(e.team) === ENGLAND).map(e => e.name);
-      const pickersHtml = engPickers.length
-        ? `<div class="eng-pickers">
-             <div class="lbl">Riding on England (${engPickers.length} ${engPickers.length === 1 ? "entry" : "entries"})</div>
-             <div class="names">${engPickers.map(n => `<b>${escapeHtml(n)}</b>`).join(" · ")}</div>
-           </div>`
-        : `<div class="eng-pickers">
-             <div class="lbl">Sweepstake</div>
-             <div class="names small" style="color:var(--gxo-muted);">Nobody in the pool holds England.</div>
-           </div>`;
-
       // England's full run of fixtures with results
       const runHtml = fixtures.map(fx => {
         const sc = scoreFor(fx.home, fx.away);
@@ -2705,8 +2693,6 @@
             <div>🕐 Kick-off <b>${escapeHtml(f.time || "TBC")}</b> UK</div>
             ${englandOut ? `<div>❌ <b style="color:#ff6b6b;">Knocked out</b></div>` : `<div>✅ <b style="color:var(--gxo-green);">Still in</b></div>`}
           </div>
-
-          ${pickersHtml}
 
           <div class="eng-fixtures">
             <h3>England's tournament</h3>
