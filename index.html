@@ -2121,6 +2121,7 @@
       renderToday();
       renderFixtures();
       renderEngland();
+      renderWinners();
     }
 
     function snapshotToArray(snapshot) {
@@ -3232,12 +3233,6 @@
       `;
     }
 
-    // Call renderWinners whenever entries or teams update
-    const _origRenderAll = renderAll;
-    function renderAll() {
-      _origRenderAll.call(this);
-      renderWinners();
-    }
 
     async function boot() {
       try {
