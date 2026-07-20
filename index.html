@@ -1300,6 +1300,207 @@
       line-height: 1.55;
     }
 
+    /* ===== WINNERS PAGE ===== */
+    .tab-winners.active {
+      background: linear-gradient(135deg, #b8860b, #ffd166);
+      color: #1a0c00;
+      box-shadow: 0 16px 34px rgba(255,209,102,0.35);
+    }
+
+    .win-hero {
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid rgba(255,209,102,0.4);
+      box-shadow: 0 32px 90px rgba(0,0,0,0.5);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255,209,102,0.35), transparent 55%),
+        radial-gradient(circle at 10% 90%, rgba(255,90,0,0.25), transparent 45%),
+        radial-gradient(circle at 90% 80%, rgba(255,90,0,0.2), transparent 40%),
+        linear-gradient(160deg, #0d0a00 0%, #1a1200 50%, #0d0800 100%);
+      margin-bottom: 18px;
+    }
+
+    /* star-burst shimmer */
+    .win-hero::before {
+      content: "";
+      position: absolute;
+      top: -40%; left: -60%;
+      width: 50%; height: 200%;
+      transform: rotate(18deg);
+      background: linear-gradient(90deg, transparent, rgba(255,230,140,0.12), transparent);
+      animation: wcpopSheen 5s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .win-hero-inner {
+      position: relative;
+      z-index: 1;
+      padding: 42px 32px 36px;
+      text-align: center;
+    }
+
+    .win-trophy { font-size: 72px; line-height: 1; filter: drop-shadow(0 12px 30px rgba(255,209,102,0.6)); animation: wcpopFloat 3.5s ease-in-out infinite; }
+
+    .win-country-flag {
+      display: block;
+      height: 80px;
+      margin: 18px auto 0;
+      border-radius: 6px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,209,102,0.4);
+    }
+
+    .win-title {
+      font-family: Oswald, Inter, sans-serif;
+      font-size: clamp(48px, 9vw, 96px);
+      font-weight: 700;
+      line-height: 0.9;
+      letter-spacing: -2px;
+      text-transform: uppercase;
+      margin: 16px 0 4px;
+      background: linear-gradient(180deg, #fff 20%, #ffd166 65%, #ff8a00);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 4px 20px rgba(255,180,40,0.4));
+    }
+
+    .win-subtitle {
+      font-family: Oswald, Inter, sans-serif;
+      font-size: clamp(16px, 2.5vw, 24px);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+
+    .win-final-score {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 22px auto 0;
+      padding: 14px 28px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,209,102,0.4);
+      background: rgba(0,0,0,0.35);
+    }
+
+    .win-final-score .team { font-weight: 900; font-size: 18px; }
+    .win-final-score .score {
+      font-family: Oswald, Inter, sans-serif;
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      color: var(--gold);
+    }
+    .win-final-score .detail { font-size: 11px; color: var(--gxo-muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
+    .win-scorer { margin-top: 10px; font-size: 14px; color: var(--gxo-muted); }
+    .win-scorer b { color: #fff; }
+
+    /* confetti */
+    .win-confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: var(--radius); }
+    .win-confetti i {
+      position: absolute; top: -16px; width: 7px; height: 16px; border-radius: 3px; opacity: 0;
+      animation: wcpopFall 3s linear infinite;
+    }
+
+    /* Awards row */
+    .win-awards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .win-award {
+      padding: 20px 18px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: linear-gradient(135deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04));
+      backdrop-filter: blur(12px);
+      text-align: center;
+    }
+
+    .win-award-icon { font-size: 36px; line-height: 1; }
+    .win-award-label {
+      font-family: Oswald, Inter, sans-serif;
+      font-size: 11px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 700;
+      margin: 10px 0 4px;
+    }
+    .win-award-name { font-weight: 900; font-size: 17px; }
+    .win-award-stat { color: var(--gxo-muted); font-size: 12px; margin-top: 4px; }
+
+    /* Facts grid */
+    .win-facts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .win-fact {
+      padding: 18px 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+      backdrop-filter: blur(10px);
+    }
+
+    .win-fact-num {
+      font-family: Oswald, Inter, sans-serif;
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -1px;
+      color: var(--gold);
+    }
+    .win-fact-label { font-weight: 800; font-size: 14px; margin: 6px 0 4px; }
+    .win-fact-desc { color: var(--gxo-muted); font-size: 13px; line-height: 1.5; }
+
+    /* Sweepstake result */
+    .win-sweep {
+      padding: 24px 26px;
+      border-radius: 22px;
+      border: 1px solid rgba(25,195,125,0.35);
+      background: linear-gradient(135deg, rgba(25,195,125,0.14), rgba(255,255,255,0.04));
+      margin-bottom: 18px;
+    }
+    .win-sweep h3 {
+      margin: 0 0 14px;
+      font-family: Oswald, Inter, sans-serif;
+      font-size: 26px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--gxo-green);
+    }
+    .win-sweep-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+    .win-sweep-card {
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(0,0,0,0.28);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .win-sweep-card.winner {
+      background: linear-gradient(135deg, rgba(255,209,102,0.2), rgba(255,209,102,0.05));
+      border-color: rgba(255,209,102,0.5);
+    }
+    .win-sweep-card .wsc-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gxo-muted); font-weight: 800; }
+    .win-sweep-card .wsc-name { font-weight: 900; font-size: 18px; margin: 4px 0 2px; }
+    .win-sweep-card .wsc-team { color: var(--gold); font-size: 13px; font-weight: 800; }
+    .win-sweep-card.winner .wsc-label { color: var(--gold); }
+
+    @media (max-width: 640px) {
+      .win-hero-inner { padding: 28px 18px 24px; }
+      .win-trophy { font-size: 52px; }
+      .win-country-flag { height: 56px; }
+      .win-final-score .team { font-size: 14px; }
+      .win-final-score .score { font-size: 28px; }
+    }
+
     @media (max-width: 1050px) {
       header, .grid, .admin-grid { grid-template-columns: 1fr; }
       .tabs { justify-content: flex-start; }
@@ -1345,6 +1546,7 @@
       <nav class="tabs">
         <button class="tab active" data-page="pickerPage">Matchday</button>
         <button class="tab tab-england" data-page="englandPage">🏴󠁧󠁢󠁥󠁮󠁧󠁿 England</button>
+        <button class="tab tab-winners" data-page="winnersPage">🏆 Winners</button>
         <button class="tab" data-page="bracketPage">Team Brackets</button>
         <button class="tab" data-page="fixturesPage">Fixtures</button>
         <button class="tab" data-page="adminPage">Admin</button>
@@ -1409,6 +1611,10 @@
         <div class="eng-stage" id="engStage">
           <div class="eng-empty" id="engEmpty">Finding England's next match…</div>
         </div>
+      </section>
+
+      <section id="winnersPage" class="page">
+        <div id="winnersContent"></div>
       </section>
 
       <section id="bracketPage" class="page">
@@ -2861,6 +3067,177 @@
     document.getElementById("fixturesPickedBtn").addEventListener("click", () => setFixtureFilter("picked"));
     document.getElementById("fixturesGroupOnlyBtn").addEventListener("click", () => setFixtureFilter("group"));
     document.getElementById("fixturesKoOnlyBtn").addEventListener("click", () => setFixtureFilter("knockout"));
+
+    // ===== WINNERS PAGE =====
+    function renderWinners() {
+      const host = document.getElementById("winnersContent");
+      if (!host) return;
+
+      // Who in the sweepstake held Spain?
+      const spainHolders = entries.filter(e => normaliseTeam(e.team) === "Spain" || e.team === "Spain");
+      const potTotal = entries.length * ENTRY_PRICE;
+      const winnerPrize = Math.floor(potTotal / 2);
+      const charityPrize = potTotal - winnerPrize;
+
+      let sweepHtml = "";
+      if (spainHolders.length) {
+        const byPerson = {};
+        spainHolders.forEach(e => {
+          const k = e.name.toLowerCase();
+          byPerson[k] = byPerson[k] || { name: e.name, count: 0 };
+          byPerson[k].count++;
+        });
+        const winners = Object.values(byPerson);
+        const share = winners.length > 0 ? Math.floor(winnerPrize / winners.length) : 0;
+        sweepHtml = `
+          <div class="win-sweep">
+            <h3>🎉 Our Sweepstake Winners</h3>
+            <div class="win-sweep-grid">
+              ${winners.map(w => `
+                <div class="win-sweep-card winner">
+                  <div class="wsc-label">🏆 Winner — £${share.toLocaleString("en-GB")} ${winners.length > 1 ? "each" : ""}</div>
+                  <div class="wsc-name">${escapeHtml(w.name)}</div>
+                  <div class="wsc-team">🇪🇸 Spain${w.count > 1 ? ` × ${w.count}` : ""}</div>
+                </div>
+              `).join("")}
+              <div class="win-sweep-card">
+                <div class="wsc-label">💚 Andy's Man Club</div>
+                <div class="wsc-name">£${charityPrize.toLocaleString("en-GB")}</div>
+                <div class="wsc-team">Half the pot to charity</div>
+              </div>
+              <div class="win-sweep-card">
+                <div class="wsc-label">💰 Total pot</div>
+                <div class="wsc-name">£${potTotal.toLocaleString("en-GB")}</div>
+                <div class="wsc-team">${entries.length} entries × £${ENTRY_PRICE}</div>
+              </div>
+            </div>
+          </div>`;
+      } else {
+        sweepHtml = `
+          <div class="win-sweep">
+            <h3>Sweepstake Result</h3>
+            <p style="color:var(--gxo-muted);">Nobody drew Spain in this sweepstake — check with the organiser about the prize!</p>
+            <div class="win-sweep-grid">
+              <div class="win-sweep-card">
+                <div class="wsc-label">💰 Total pot</div>
+                <div class="wsc-name">£${potTotal.toLocaleString("en-GB")}</div>
+                <div class="wsc-team">${entries.length} entries × £${ENTRY_PRICE}</div>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      // Confetti
+      const colours = ["#ffd166","#ff5a00","#ffffff","#19c37d","#c60b1e","#aa151b"];
+      const confetti = Array.from({ length: 30 }, () => {
+        const style = `left:${Math.random()*100}%;background:${colours[Math.floor(Math.random()*colours.length)]};animation-delay:${(Math.random()*3).toFixed(2)}s;animation-duration:${(2.4+Math.random()*1.8).toFixed(2)}s`;
+        return `<i style="${style}"></i>`;
+      }).join("");
+
+      host.innerHTML = `
+        <div class="win-hero">
+          <div class="win-confetti">${confetti}</div>
+          <div class="win-hero-inner">
+            <div class="win-trophy">🏆</div>
+            <img class="win-country-flag" src="https://flagcdn.com/h80/es.png" srcset="https://flagcdn.com/h160/es.png 2x" alt="Spain flag">
+            <div class="win-subtitle">FIFA World Cup 2026 Champions</div>
+            <div class="win-title">Spain</div>
+            <div class="win-final-score">
+              <div>
+                <div class="team">${flagFor("Spain")} Spain</div>
+              </div>
+              <div>
+                <div class="score">1 – 0</div>
+                <div class="detail">After extra time</div>
+              </div>
+              <div>
+                <div class="team">${flagFor("VARgentina")} VARgentina</div>
+              </div>
+            </div>
+            <div class="win-scorer">⚽ <b>Ferran Torres</b> 106' · MetLife Stadium, New Jersey · 19 July 2026</div>
+          </div>
+        </div>
+
+        ${sweepHtml}
+
+        <div class="win-awards">
+          <div class="win-award">
+            <div class="win-award-icon">👟</div>
+            <div class="win-award-label">Golden Boot</div>
+            <div class="win-award-name">${flagFor("France")} Kylian Mbappé</div>
+            <div class="win-award-stat">10 goals — all-time WC top scorer (22)</div>
+          </div>
+          <div class="win-award">
+            <div class="win-award-icon">⭐</div>
+            <div class="win-award-label">Golden Ball</div>
+            <div class="win-award-name">${flagFor("Spain")} Rodri</div>
+            <div class="win-award-stat">Best player of the tournament</div>
+          </div>
+          <div class="win-award">
+            <div class="win-award-icon">🧤</div>
+            <div class="win-award-label">Golden Glove</div>
+            <div class="win-award-name">${flagFor("VARgentina")} Emiliano Martínez</div>
+            <div class="win-award-stat">Kept Argentina in it until the end</div>
+          </div>
+          <div class="win-award">
+            <div class="win-award-icon">🌟</div>
+            <div class="win-award-label">Silver Ball</div>
+            <div class="win-award-name">${flagFor("VARgentina")} Lionel Messi</div>
+            <div class="win-award-stat">8 goals, 4 assists — likely his last WC</div>
+          </div>
+        </div>
+
+        <div class="win-facts">
+          <div class="win-fact">
+            <div class="win-fact-num">2nd</div>
+            <div class="win-fact-label">Spain's World Cup titles</div>
+            <div class="win-fact-desc">First in 2010. Only the second country to hold the men's and women's World Cup simultaneously.</div>
+          </div>
+          <div class="win-fact">
+            <div class="win-fact-num">106'</div>
+            <div class="win-fact-label">Ferran Torres' winner</div>
+            <div class="win-fact-desc">Only the second substitute to score the winning goal in a World Cup final. Spain hadn't conceded a single goal.</div>
+          </div>
+          <div class="win-fact">
+            <div class="win-fact-num">38</div>
+            <div class="win-fact-label">Spain's unbeaten run</div>
+            <div class="win-fact-desc">Consecutive matches without a loss, stretching back through Euro 2024. Utterly dominant.</div>
+          </div>
+          <div class="win-fact">
+            <div class="win-fact-num">10</div>
+            <div class="win-fact-label">Mbappé's goals</div>
+            <div class="win-fact-desc">Equals Gerd Müller's 1970 haul as the most in a single tournament since Fontaine's 13 in 1958. His 22 career WC goals is now the all-time record.</div>
+          </div>
+          <div class="win-fact">
+            <div class="win-fact-num">0</div>
+            <div class="win-fact-label">Argentina shots on target in the final</div>
+            <div class="win-fact-desc">VARgentina managed just 2 shots in 120 minutes, none on target. Spain had 20 attempts.</div>
+          </div>
+          <div class="win-fact">
+            <div class="win-fact-num">104</div>
+            <div class="win-fact-label">Total matches played</div>
+            <div class="win-fact-desc">The biggest World Cup in history. 48 teams, 3 host nations across USA, Canada and Mexico.</div>
+          </div>
+          <div class="win-fact">
+            <div class="win-fact-num">7</div>
+            <div class="win-fact-label">Jude Bellingham goals</div>
+            <div class="win-fact-desc">England's best, scoring in the bronze medal match as the Three Lions beat France 6–4 in a thriller.</div>
+          </div>
+          <div class="win-fact">
+            <div class="win-fact-num">🏴󠁧󠁢󠁥󠁮󠁧󠁿</div>
+            <div class="win-fact-label">England finished 3rd</div>
+            <div class="win-fact-desc">Lost to Spain in the semi-final, then beat France 6–4 in the bronze medal match. Mbappé scored twice in defeat.</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Call renderWinners whenever entries or teams update
+    const _origRenderAll = renderAll;
+    function renderAll() {
+      _origRenderAll.call(this);
+      renderWinners();
+    }
 
     async function boot() {
       try {
