@@ -1,3339 +1,651 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GXO World Cup Picker</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --gxo-orange: #ff5a00;
-      --gxo-orange-2: #ff7a1a;
-      --gxo-black: #050505;
-      --gxo-charcoal: #111217;
-      --gxo-card: rgba(255, 255, 255, 0.08);
-      --gxo-card-strong: rgba(255, 255, 255, 0.13);
-      --gxo-white: #ffffff;
-      --gxo-muted: #b8bdc9;
-      --gxo-green: #19c37d;
-      --danger: #ff4d4d;
-      --gold: #ffd166;
-      --line: rgba(255, 255, 255, 0.14);
-      --shadow: 0 26px 80px rgba(0, 0, 0, 0.38);
-      --radius: 24px;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      color: var(--gxo-white);
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at 12% 8%, rgba(255, 90, 0, 0.42), transparent 24%),
-        radial-gradient(circle at 88% 16%, rgba(25, 195, 125, 0.26), transparent 22%),
-        radial-gradient(circle at 42% 92%, rgba(255, 209, 102, 0.17), transparent 26%),
-        linear-gradient(135deg, #050505 0%, #111217 52%, #1c1008 100%);
-      overflow-x: hidden;
-    }
-
-    /* Looping football video background */
-    .bg-video {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-      z-index: -2;
-      opacity: 0.35;
-      filter: saturate(0.85) contrast(1.05);
-      pointer-events: none;
-    }
-
-    /* Heavy dim/tint over the video so text stays readable */
-    .bg-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: -1;
-      pointer-events: none;
-      background:
-        radial-gradient(circle at 12% 8%, rgba(255, 90, 0, 0.55), transparent 28%),
-        radial-gradient(circle at 88% 16%, rgba(25, 195, 125, 0.3), transparent 24%),
-        radial-gradient(circle at 42% 92%, rgba(255, 209, 102, 0.22), transparent 28%),
-        linear-gradient(135deg, rgba(5,5,5,0.72) 0%, rgba(17,18,23,0.78) 52%, rgba(28,16,8,0.78) 100%);
-    }
-
-    /* Disable video background on phones/older devices to save battery */
-    @media (max-width: 640px), (prefers-reduced-motion: reduce) {
-      .bg-video { display: none; }
-      .bg-overlay { display: none; }
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
-      background-size: 46px 46px;
-      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.1));
-      z-index: 0;
-    }
-
-    .app {
-      position: relative;
-      z-index: 1;
-      width: min(1420px, calc(100% - 28px));
-      margin: 0 auto;
-      padding: 26px 0 42px;
-    }
-
-    header {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 18px;
-      align-items: center;
-      margin-bottom: 22px;
-      padding: 22px;
-      background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .logo-mark {
-      width: 66px;
-      height: 66px;
-      border-radius: 20px;
-      display: grid;
-      place-items: center;
-      color: #000;
-      font-weight: 950;
-      letter-spacing: -2px;
-      font-size: 22px;
-      background: linear-gradient(135deg, var(--gxo-orange), var(--gold));
-      box-shadow: 0 14px 38px rgba(255, 90, 0, 0.42);
-    }
-
-    h1 {
-      margin: 0;
-      font-family: Oswald, Inter, sans-serif;
-      font-size: clamp(34px, 5vw, 74px);
-      line-height: 0.95;
-      letter-spacing: -1.5px;
-      text-transform: uppercase;
-    }
-
-    .subtitle {
-      margin-top: 8px;
-      color: var(--gxo-muted);
-      font-size: 15px;
-      max-width: 740px;
-    }
-
-    .tabs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-
-    button, input, select, textarea {
-      font: inherit;
-    }
-
-    button {
-      border: 0;
-      color: var(--gxo-white);
-      cursor: pointer;
-      border-radius: 999px;
-      padding: 12px 17px;
-      font-weight: 800;
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.15);
-      transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
-    }
-
-    button:hover { transform: translateY(-2px); background: rgba(255,255,255,0.18); }
-    button:active { transform: translateY(0); }
-
-    .tab.active, .primary {
-      background: linear-gradient(135deg, var(--gxo-orange), #ff2f00);
-      color: #fff;
-      box-shadow: 0 16px 34px rgba(255, 90, 0, 0.3);
-    }
-
-    .danger { background: linear-gradient(135deg, #ff4d4d, #b30000); }
-    .success { background: linear-gradient(135deg, #19c37d, #087f5b); }
-    .ghost { background: transparent; }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1.05fr 0.95fr;
-      gap: 18px;
-    }
-
-    .panel {
-      border-radius: var(--radius);
-      background: linear-gradient(135deg, rgba(255,255,255,0.11), rgba(255,255,255,0.045));
-      border: 1px solid var(--line);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-      padding: 22px;
-      min-width: 0;
-    }
-
-    .panel h2 {
-      margin: 0 0 12px;
-      font-family: Oswald, Inter, sans-serif;
-      font-size: 32px;
-      text-transform: uppercase;
-      letter-spacing: -0.5px;
-    }
-
-    .panel p { color: var(--gxo-muted); margin-top: 0; }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 12px;
-      margin: 16px 0;
-    }
-
-    input, select, textarea {
-      width: 100%;
-      border-radius: 18px;
-      padding: 14px 15px;
-      border: 1px solid rgba(255,255,255,0.16);
-      background: rgba(0,0,0,0.28);
-      color: var(--gxo-white);
-      outline: none;
-    }
-
-    textarea { min-height: 160px; resize: vertical; }
-
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--gxo-orange);
-      box-shadow: 0 0 0 4px rgba(255,90,0,0.18);
-    }
-
-    /* MONEY POT */
-    .pot {
-      position: relative;
-      margin: 0 0 18px;
-      padding: 22px 26px;
-      border-radius: 26px;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      align-items: center;
-      gap: 18px;
-      background:
-        radial-gradient(circle at 80% 20%, rgba(255,209,102,0.5), transparent 55%),
-        linear-gradient(135deg, #1a1305, #2a1a04 60%, #3a1f00);
-      border: 1px solid rgba(255,209,102,0.45);
-      box-shadow:
-        0 22px 60px rgba(255,90,0,0.22),
-        inset 0 1px 0 rgba(255,255,255,0.12);
-      overflow: hidden;
-    }
-
-    .pot::before {
-      content: "";
-      position: absolute;
-      inset: -40% -10% auto auto;
-      width: 280px; height: 280px;
-      background: radial-gradient(circle, rgba(255,209,102,0.35), transparent 60%);
-      filter: blur(8px);
-      pointer-events: none;
-    }
-
-    .pot-label {
-      font-family: Oswald, Inter, sans-serif;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--gold);
-      font-size: 13px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .pot-label::before {
-      content: "";
-      display: inline-block;
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: var(--gold);
-      box-shadow: 0 0 14px var(--gold);
-      animation: potBlink 1.8s ease-in-out infinite;
-    }
-
-    @keyframes potBlink {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: .35; transform: scale(.7); }
-    }
-
-    .pot-amount {
-      font-family: Oswald, Inter, sans-serif;
-      font-size: clamp(46px, 7vw, 88px);
-      font-weight: 700;
-      line-height: 0.9;
-      letter-spacing: -2px;
-      color: #fff;
-      text-shadow: 0 4px 24px rgba(255,209,102,0.4);
-      margin-top: 6px;
-    }
-
-    .pot-amount.bump {
-      animation: potBump .6s cubic-bezier(.2,.9,.3,1.2);
-    }
-
-    @keyframes potBump {
-      0%   { transform: scale(1); color: #fff; }
-      40%  { transform: scale(1.18); color: var(--gold); text-shadow: 0 0 40px var(--gold); }
-      100% { transform: scale(1); color: #fff; }
-    }
-
-    .pot-meta {
-      text-align: right;
-      color: var(--gxo-muted);
-      font-size: 12px;
-      line-height: 1.5;
-    }
-    .pot-meta b { color: var(--gxo-white); font-size: 15px; font-weight: 800; display: block; }
-
-    .stat-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-top: 14px;
-    }
-
-    .stat {
-      padding: 16px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.12);
-    }
-
-    .stat span { display: block; color: var(--gxo-muted); font-size: 12px; text-transform: uppercase; letter-spacing: .9px; }
-    .stat b { display: block; margin-top: 6px; font-size: 28px; }
-
-    .leaderboard, .entries-list {
-      display: grid;
-      gap: 10px;
-      max-height: 720px;
-      overflow: auto;
-      padding-right: 4px;
-    }
-
-    .entry-card {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: center;
-      padding: 14px;
-      border-radius: 18px;
-      background: rgba(255,255,255,0.075);
-      border: 1px solid rgba(255,255,255,0.11);
-    }
-
-    .entry-card .name { font-weight: 900; }
-    .entry-card .team { color: var(--gold); font-weight: 900; }
-    .small { color: var(--gxo-muted); font-size: 12px; }
-
-    .teams-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 6px;
-    }
-
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(255,209,102,0.18);
-      border: 1px solid rgba(255,209,102,0.35);
-      color: var(--gold);
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: .3px;
-    }
-
-    .flag {
-      display: inline-block;
-      height: 14px;
-      width: auto;
-      vertical-align: -2px;
-      margin-right: 7px;
-      border-radius: 2px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.08);
-      object-fit: cover;
-    }
-
-    .chip .flag {
-      height: 12px;
-      margin-right: 6px;
-    }
-
-    /* Unpaid entry styling */
-    .chip.unpaid {
-      background: rgba(255, 77, 77, 0.16);
-      border-color: rgba(255, 77, 77, 0.5);
-      color: #ff9a9a;
-    }
-
-    .chip.unpaid::after {
-      content: "NOT PAID";
-      font-size: 9px;
-      font-weight: 950;
-      letter-spacing: .8px;
-      padding: 2px 6px;
-      border-radius: 999px;
-      background: #ff4d4d;
-      color: #fff;
-    }
-
-    /* Knocked-out teams */
-    .chip.out {
-      opacity: .45;
-      text-decoration: line-through;
-      text-decoration-color: rgba(255, 77, 77, 0.8);
-    }
-
-    .team-line.eliminated { opacity: .42; }
-
-    .team-line.eliminated > span:first-child {
-      text-decoration: line-through;
-      text-decoration-color: rgba(255, 77, 77, 0.85);
-    }
-
-    .badge.out {
-      background: rgba(255, 77, 77, 0.18);
-      border: 1px solid rgba(255, 77, 77, 0.5);
-      color: #ff9a9a;
-      font-size: 11px;
-      letter-spacing: .5px;
-    }
-
-    .owes-badge {
-      display: inline-block;
-      margin-top: 6px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(255, 77, 77, 0.2);
-      border: 1px solid rgba(255, 77, 77, 0.55);
-      color: #ff9a9a;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: .6px;
-      text-transform: uppercase;
-    }
-
-    .paid-status {
-      display: inline-block;
-      margin-top: 4px;
-      padding: 2px 9px;
-      border-radius: 999px;
-      font-size: 10px;
-      font-weight: 950;
-      letter-spacing: .7px;
-      text-transform: uppercase;
-    }
-
-    .paid-status.yes { background: rgba(25,195,125,0.18); border: 1px solid rgba(25,195,125,0.45); color: var(--gxo-green); }
-    .paid-status.no { background: rgba(255,77,77,0.2); border: 1px solid rgba(255,77,77,0.55); color: #ff9a9a; }
-
-    /* Live scores */
-    .match-score {
-      display: inline-block;
-      padding: 2px 10px;
-      border-radius: 999px;
-      font-family: Oswald, Inter, sans-serif;
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: .5px;
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.16);
-      margin: 0 6px;
-      vertical-align: -1px;
-    }
-
-    .match-score.live {
-      background: rgba(25,195,125,0.2);
-      border-color: rgba(25,195,125,0.55);
-      color: var(--gxo-green);
-    }
-
-    .match-score.ft {
-      background: rgba(255,255,255,0.12);
-      color: var(--gxo-white);
-    }
-
-    .live-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 10px;
-      font-weight: 950;
-      letter-spacing: 1px;
-      color: var(--gxo-green);
-      text-transform: uppercase;
-    }
-
-    .live-tag::before {
-      content: "";
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--gxo-green);
-      box-shadow: 0 0 10px var(--gxo-green);
-      animation: potBlink 1.4s ease-in-out infinite;
-    }
-
-    .fixture-matchup .flag,
-    .today-match-teams .flag {
-      height: 16px;
-      margin-right: 8px;
-    }
-
-    .group-card .team-line .flag {
-      height: 14px;
-    }
-
-    .person-card .team-count {
-      background: var(--gold);
-      color: #1a0c00;
-      font-weight: 950;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-    }
-
-    .page { display: none; }
-    .page.active { display: block; }
-
-    /* ===== ENGLAND PAGE ===== */
-    body.england-focus header { display: none; }
-    body.england-focus .app { padding-top: 12px; padding-bottom: 12px; }
-    body.england-focus .footer-note { display: none; }
-
-    /* When active, the England page fills the screen and lays out to fit */
-    #englandPage.page.active {
-      display: flex;
-      flex-direction: column;
-      height: calc(100dvh - 24px);
-    }
-
-    .eng-back {
-      display: none;
-      align-items: center;
-      gap: 8px;
-      margin: 0 0 10px;
-      padding: 9px 15px;
-      width: auto;
-      flex: 0 0 auto;
-      align-self: flex-start;
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.16);
-      font-weight: 800;
-      font-size: 14px;
-    }
-    body.england-focus .eng-back { display: inline-flex; }
-
-    .tab-england.active {
-      background: linear-gradient(135deg, #d40000, #8a0000);
-      box-shadow: 0 16px 34px rgba(212, 0, 0, 0.35);
-    }
-
-    .eng-stage {
-      position: relative;
-      border-radius: var(--radius);
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.14);
-      box-shadow: var(--shadow);
-      background:
-        radial-gradient(circle at 50% -10%, rgba(255,255,255,0.14), transparent 45%),
-        radial-gradient(circle at 15% 20%, rgba(212,0,0,0.28), transparent 40%),
-        radial-gradient(circle at 85% 25%, rgba(212,0,0,0.22), transparent 42%),
-        linear-gradient(160deg, #0a0d16 0%, #12060a 55%, #1a0406 100%);
-    }
-
-    /* In focus mode the stage fills the leftover height */
-    body.england-focus .eng-stage {
-      flex: 1 1 auto;
-      min-height: 0;
-    }
-
-    /* St George cross, faint, behind everything */
-    .eng-stage::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      opacity: 0.06;
-      background:
-        linear-gradient(to right, transparent calc(50% - 26px), #fff calc(50% - 26px), #fff calc(50% + 26px), transparent calc(50% + 26px)),
-        linear-gradient(to bottom, transparent calc(50% - 26px), #fff calc(50% - 26px), #fff calc(50% + 26px), transparent calc(50% + 26px));
-    }
-
-    .eng-inner {
-      position: relative;
-      z-index: 1;
-      padding: 32px 26px 40px;
-    }
-
-    /* Focus mode: fill the stage, centre the scoreboard, cap the fixtures */
-    body.england-focus .eng-inner {
-      height: 100%;
-      padding: 20px 22px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    body.england-focus .eng-board { margin: auto 0 10px; }
-    body.england-focus .eng-fixtures {
-      flex: 0 1 auto;
-      min-height: 0;
-      overflow-y: auto;
-      margin-top: 18px;
-    }
-    /* score scales to the shorter of width/height so it never overflows */
-    body.england-focus .eng-score { font-size: clamp(48px, min(15vw, 20vh), 150px); }
-    body.england-focus .eng-side .flag { height: min(92px, 12vh) !important; }
-
-    .eng-topline {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 8px;
-    }
-
-    .eng-kicker {
-      font-family: Oswald, Inter, sans-serif;
-      text-transform: uppercase;
-      letter-spacing: 4px;
-      font-size: 13px;
-      font-weight: 700;
-      color: #ff6b6b;
-    }
-
-    .eng-status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      padding: 6px 14px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 950;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      border: 1px solid rgba(255,255,255,0.2);
-      background: rgba(255,255,255,0.08);
-      color: var(--gxo-muted);
-    }
-
-    .eng-status-pill.live {
-      background: rgba(25,195,125,0.2);
-      border-color: rgba(25,195,125,0.6);
-      color: var(--gxo-green);
-    }
-    .eng-status-pill.live::before {
-      content: "";
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--gxo-green);
-      box-shadow: 0 0 12px var(--gxo-green);
-      animation: potBlink 1.4s ease-in-out infinite;
-    }
-    .eng-status-pill.ft { color: #fff; background: rgba(255,255,255,0.14); }
-    .eng-status-pill.soon { color: var(--gold); border-color: rgba(255,209,102,0.5); background: rgba(255,209,102,0.14); }
-
-    .eng-stagetag {
-      font-family: Oswald, Inter, sans-serif;
-      font-size: 15px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--gxo-white);
-      font-weight: 700;
-    }
-
-    /* The scoreboard */
-    .eng-board {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items: center;
-      gap: 14px;
-      margin: 26px 0 10px;
-    }
-
-    .eng-side {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-      text-align: center;
-      min-width: 0;
-    }
-
-    .eng-side .flag {
-      height: 92px !important;
-      margin: 0 !important;
-      border-radius: 6px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1);
-    }
-
-    .eng-team-name {
-      font-family: Oswald, Inter, sans-serif;
-      font-size: clamp(20px, 3.4vw, 34px);
-      font-weight: 700;
-      line-height: 1;
-      letter-spacing: -0.5px;
-      text-transform: uppercase;
-    }
-
-    .eng-team-name.is-eng { color: #fff; }
-    .eng-side.out .eng-team-name { text-decoration: line-through; text-decoration-color: #ff4d4d; opacity: .6; }
-
-    .eng-centre {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      padding: 0 6px;
-    }
-
-    .eng-score {
-      font-family: Oswald, Inter, sans-serif;
-      font-weight: 700;
-      font-size: clamp(64px, 15vw, 150px);
-      line-height: 0.85;
-      letter-spacing: -4px;
-      white-space: nowrap;
-      background: linear-gradient(180deg, #fff 30%, #ffd9d9 90%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      filter: drop-shadow(0 6px 26px rgba(255,80,80,0.3));
-    }
-
-    .eng-score.pending {
-      font-size: clamp(40px, 9vw, 90px);
-      letter-spacing: -1px;
-      color: var(--gxo-muted);
-      -webkit-text-fill-color: var(--gxo-muted);
-    }
-
-    .eng-clock {
-      font-family: Oswald, Inter, sans-serif;
-      font-size: 15px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--gxo-green);
-      font-weight: 700;
-      min-height: 18px;
-    }
-    .eng-clock.grey { color: var(--gxo-muted); }
-
-    .eng-pens {
-      font-size: 13px;
-      color: var(--gold);
-      font-weight: 800;
-      letter-spacing: .4px;
-    }
-
-    /* Countdown for upcoming games */
-    .eng-countdown {
-      display: flex;
-      justify-content: center;
-      gap: 16px;
-      margin: 22px 0 6px;
-    }
-
-    .eng-cd-cell {
-      min-width: 74px;
-      padding: 14px 10px;
-      border-radius: 16px;
-      background: rgba(0,0,0,0.32);
-      border: 1px solid rgba(255,255,255,0.1);
-      text-align: center;
-    }
-
-    .eng-cd-num {
-      font-family: Oswald, Inter, sans-serif;
-      font-size: 40px;
-      font-weight: 700;
-      line-height: 1;
-      letter-spacing: -1px;
-    }
-    .eng-cd-label {
-      display: block;
-      margin-top: 6px;
-      font-size: 10px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--gxo-muted);
-      font-weight: 800;
-    }
-
-    .eng-meta-row {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 10px 22px;
-      margin-top: 20px;
-      color: var(--gxo-muted);
-      font-size: 13px;
-    }
-    .eng-meta-row b { color: #fff; font-weight: 800; }
-
-    .eng-fixtures {
-      margin: 26px auto 0;
-      max-width: 720px;
-    }
-    .eng-fixtures h3 {
-      text-align: center;
-      font-family: Oswald, Inter, sans-serif;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      font-size: 15px;
-      color: var(--gxo-muted);
-      margin: 0 0 12px;
-    }
-
-    .eng-fx {
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      gap: 12px;
-      align-items: center;
-      padding: 11px 16px;
-      border-radius: 14px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-      margin-bottom: 8px;
-    }
-    .eng-fx .fx-when { font-size: 12px; color: var(--gxo-muted); min-width: 92px; }
-    .eng-fx .fx-opp { font-weight: 800; }
-    .eng-fx .fx-res {
-      font-family: Oswald, Inter, sans-serif;
-      font-weight: 700;
-      letter-spacing: .5px;
-    }
-    .eng-fx .fx-res.win { color: var(--gxo-green); }
-    .eng-fx .fx-res.loss { color: #ff6b6b; }
-    .eng-fx .fx-res.draw { color: var(--gold); }
-
-    .eng-empty {
-      padding: 60px 20px;
-      text-align: center;
-      color: var(--gxo-muted);
-      font-size: 15px;
-    }
-
-    @media (max-width: 640px) {
-      .eng-inner { padding: 22px 14px 30px; }
-      .eng-board { gap: 6px; }
-      .eng-side .flag { height: 56px !important; }
-      .eng-team-name { font-size: 16px; }
-      .eng-score { letter-spacing: -2px; }
-      .eng-cd-cell { min-width: 60px; padding: 12px 6px; }
-      .eng-cd-num { font-size: 30px; }
-      .eng-fx { grid-template-columns: 1fr auto; }
-      .eng-fx .fx-when { grid-column: 1 / -1; min-width: 0; }
-    }
-
-    .groups {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-    }
-
-    .group-card {
-      border-radius: 22px;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.13);
-      background: rgba(255,255,255,0.07);
-    }
-
-    .group-title {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 15px;
-      background: linear-gradient(135deg, rgba(255,90,0,0.95), rgba(255,90,0,0.52));
-      font-weight: 950;
-      text-transform: uppercase;
-    }
-
-    .team-line {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: center;
-      padding: 12px 15px;
-      border-top: 1px solid rgba(255,255,255,0.09);
-    }
-
-    .badge {
-      min-width: 34px;
-      height: 30px;
-      display: inline-grid;
-      place-items: center;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.12);
-      font-weight: 950;
-    }
-
-    .badge.hot { background: var(--gold); color: #080808; }
-    .badge.empty { background: rgba(255,255,255,0.06); color: var(--gxo-muted); }
-
-    .lock-banner {
-      margin: 0 0 16px;
-      padding: 14px 18px;
-      border-radius: 14px;
-      font-size: 13px;
-      font-weight: 700;
-      display: none;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .lock-banner.show { display: flex; }
-
-    .lock-banner.locked {
-      background: linear-gradient(90deg, rgba(255, 77, 77, 0.25), rgba(255, 77, 77, 0.08));
-      border: 1px solid rgba(255, 77, 77, 0.5);
-      color: #ff8a8a;
-    }
-
-    .lock-banner .lock-icon { font-size: 18px; }
-    .lock-banner b { color: var(--gxo-white); }
-
-    /* TODAY'S MATCHES WIDGET */
-    .today-widget {
-      margin: 0 0 18px;
-      padding: 18px 22px;
-      border-radius: 22px;
-      background: linear-gradient(135deg, rgba(25,195,125,0.18), rgba(255,255,255,0.045));
-      border: 1px solid rgba(25,195,125,0.35);
-      box-shadow: 0 18px 50px rgba(0,0,0,0.3);
-    }
-
-    .today-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      margin-bottom: 14px;
-      flex-wrap: wrap;
-    }
-
-    .today-label {
-      font-family: Oswald, Inter, sans-serif;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      color: var(--gxo-green);
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .today-date {
-      font-family: Oswald, Inter, sans-serif;
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      line-height: 1.05;
-      margin-top: 2px;
-    }
-
-    .today-our-count {
-      padding: 6px 12px;
-      border-radius: 999px;
-      background: var(--gold);
-      color: #1a0c00;
-      font-weight: 950;
-      font-size: 12px;
-      letter-spacing: .5px;
-      text-transform: uppercase;
-    }
-
-    .today-our-count.zero {
-      background: rgba(255,255,255,0.08);
-      color: var(--gxo-muted);
-    }
-
-    .today-matches {
-      display: grid;
-      gap: 8px;
-    }
-
-    .today-match {
-      display: grid;
-      grid-template-columns: 64px 1fr auto;
-      gap: 12px;
-      align-items: center;
-      padding: 10px 14px;
-      border-radius: 14px;
-      background: rgba(0,0,0,0.28);
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .today-match.has-pick {
-      background: linear-gradient(90deg, rgba(255,209,102,0.2), rgba(255,209,102,0.05));
-      border-color: rgba(255,209,102,0.45);
-    }
-
-    .today-match-time {
-      font-family: Oswald, Inter, sans-serif;
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: -.3px;
-    }
-
-    .today-match-teams {
-      font-weight: 800;
-      font-size: 14px;
-      line-height: 1.3;
-    }
-
-    .today-match-teams .picked {
-      color: var(--gold);
-    }
-
-    .today-match-meta {
-      font-size: 11px;
-      color: var(--gxo-muted);
-      letter-spacing: .4px;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .today-pickers {
-      margin-top: 4px;
-      font-size: 11px;
-      color: var(--gxo-muted);
-      letter-spacing: .3px;
-    }
-
-    .today-pickers b { color: var(--gold); font-weight: 800; }
-
-    @media (max-width: 640px) {
-      .today-match {
-        grid-template-columns: 52px 1fr;
-        gap: 10px;
-        padding: 10px 12px;
-      }
-      .today-match-meta {
-        grid-column: 1 / -1;
-        text-align: right;
-      }
-    }
-    .fixtures-list {
-      display: grid;
-      gap: 22px;
-      max-height: 720px;
-      overflow: auto;
-      padding-right: 6px;
-    }
-
-    .fixtures-day {
-      border-radius: 22px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      overflow: hidden;
-    }
-
-    .fixtures-day-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 18px;
-      background: linear-gradient(135deg, rgba(255,90,0,0.42), rgba(255,90,0,0.18));
-      font-family: Oswald, Inter, sans-serif;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-size: 17px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-
-    .fixtures-day-header .day-count {
-      font-size: 12px;
-      letter-spacing: 1.2px;
-      color: var(--gxo-muted);
-      font-weight: 800;
-    }
-
-    .fixture-row {
-      display: grid;
-      grid-template-columns: 70px 1fr auto;
-      align-items: center;
-      gap: 14px;
-      padding: 13px 18px;
-      border-top: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .fixture-row:first-child { border-top: 0; }
-
-    .fixture-row.highlight {
-      background: linear-gradient(90deg, rgba(255,209,102,0.18), rgba(255,209,102,0.04));
-      border-left: 3px solid var(--gold);
-      padding-left: 15px;
-    }
-
-    .fixture-time {
-      font-family: Oswald, Inter, sans-serif;
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--gxo-white);
-      letter-spacing: -.4px;
-    }
-
-    .fixture-teams {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      min-width: 0;
-    }
-
-    .fixture-matchup {
-      font-weight: 800;
-      font-size: 15px;
-      line-height: 1.25;
-      overflow-wrap: break-word;
-    }
-
-    .fixture-row.highlight .fixture-matchup .picked {
-      color: var(--gold);
-    }
-
-    .fixture-meta {
-      color: var(--gxo-muted);
-      font-size: 12px;
-      letter-spacing: .4px;
-    }
-
-    .fixture-stage {
-      padding: 5px 11px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.12);
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .fixture-stage.stage-group { background: rgba(255,90,0,0.22); border-color: rgba(255,90,0,0.4); color: var(--gxo-orange-2); }
-    .fixture-stage.stage-r32 { background: rgba(25,195,125,0.18); border-color: rgba(25,195,125,0.4); color: var(--gxo-green); }
-    .fixture-stage.stage-r16 { background: rgba(99,179,237,0.18); border-color: rgba(99,179,237,0.4); color: #99c8ff; }
-    .fixture-stage.stage-qf { background: rgba(208,135,255,0.18); border-color: rgba(208,135,255,0.4); color: #d199ff; }
-    .fixture-stage.stage-sf { background: rgba(255,209,102,0.25); border-color: rgba(255,209,102,0.5); color: var(--gold); }
-    .fixture-stage.stage-final { background: linear-gradient(135deg, var(--gxo-orange), var(--gold)); color: #1a0c00; border-color: transparent; }
-
-    .fixtures-empty {
-      padding: 30px;
-      text-align: center;
-      color: var(--gxo-muted);
-    }
-
-    @media (max-width: 640px) {
-      .fixture-row {
-        grid-template-columns: 56px 1fr;
-        gap: 10px;
-        padding: 12px 14px;
-      }
-      .fixture-row.highlight { padding-left: 11px; }
-      .fixture-stage {
-        grid-column: 1 / -1;
-        justify-self: start;
-        font-size: 10px;
-      }
-      .fixture-time { font-size: 16px; }
-      .fixture-matchup { font-size: 14px; }
-    }
-
-    .fixture-keydates {
-      padding: 20px 22px;
-      border-radius: 22px;
-      background: rgba(0,0,0,0.28);
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    .fixture-keydates h3 {
-      margin: 0 0 14px;
-      font-family: Oswald, Inter, sans-serif;
-      font-size: 20px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--gold);
-    }
-
-    .keydates-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
-    }
-
-    .keydates-grid > div {
-      padding: 12px 14px;
-      border-radius: 14px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .keydates-grid b {
-      display: block;
-      font-weight: 800;
-      font-size: 14px;
-      margin-bottom: 4px;
-    }
-
-    .keydates-grid span {
-      color: var(--gxo-muted);
-      font-size: 13px;
-    }
-
-    .admin-lock {
-      max-width: 520px;
-      margin: 30px auto;
-    }
-
-    .admin-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-    }
-
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin: 12px 0 18px;
-    }
-
-    .toast {
-      position: fixed;
-      right: 18px;
-      bottom: 18px;
-      z-index: 10;
-      max-width: 420px;
-      padding: 14px 16px;
-      border-radius: 18px;
-      background: #111;
-      border: 1px solid rgba(255,255,255,0.15);
-      box-shadow: var(--shadow);
-      transform: translateY(120%);
-      transition: transform .25s ease;
-    }
-
-    .toast.show { transform: translateY(0); }
-
-    .football-strip {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-      opacity: .9;
-    }
-
-    .football-strip i {
-      display: block;
-      height: 8px;
-      flex: 1;
-      border-radius: 999px;
-      background: linear-gradient(90deg, var(--gxo-orange), var(--gold));
-    }
-
-    .footer-note {
-      margin-top: 18px;
-      color: var(--gxo-muted);
-      font-size: 12px;
-      text-align: center;
-    }
-
-    /* Tournament status panel (replaces the old picker) */
-    .draw-done {
-      margin: 14px 0 0;
-      padding: 24px;
-      border-radius: 22px;
-      text-align: center;
-      background:
-        radial-gradient(circle at 50% 0%, rgba(255,209,102,0.18), transparent 55%),
-        rgba(0,0,0,0.3);
-      border: 1px solid rgba(255,209,102,0.3);
-    }
-
-    .draw-done .ball { font-size: 44px; line-height: 1; }
-
-    .draw-done h3 {
-      margin: 12px 0 6px;
-      font-family: Oswald, Inter, sans-serif;
-      font-size: 28px;
-      text-transform: uppercase;
-      letter-spacing: -0.5px;
-      color: var(--gold);
-    }
-
-    .draw-done p {
-      margin: 0 auto;
-      max-width: 420px;
-      color: var(--gxo-muted);
-      font-size: 14px;
-      line-height: 1.55;
-    }
-
-    /* ===== WINNERS PAGE FOCUS ===== */
-    body.winners-focus header { display: none; }
-    body.winners-focus .footer-note { display: none; }
-    body.winners-focus .app { padding-top: 10px; padding-bottom: 10px; }
-
-    #winnersPage.page.active {
-      display: flex;
-      flex-direction: column;
-      height: calc(100dvh - 20px);
-    }
-
-    #winnersContent {
-      flex: 1 1 auto;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      overflow: hidden;
-    }
-
-    /* The scaler wraps all content and gets transform: scale() from JS */
-    #winnersScaler {
-      transform-origin: top center;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      width: 100%;
-    }
-
-    /* back button on winners page */
-    .win-back {
-      display: none;
-      align-items: center;
-      gap: 8px;
-      margin: 0 0 8px;
-      padding: 8px 14px;
-      width: auto;
-      align-self: flex-start;
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.16);
-      font-weight: 800;
-      font-size: 13px;
-      flex: 0 0 auto;
-    }
-    body.winners-focus .win-back { display: inline-flex; }
-
-    .tab-winners.active {
-      background: linear-gradient(135deg, #b8860b, #ffd166);
-      color: #1a0c00;
-      box-shadow: 0 16px 34px rgba(255,209,102,0.35);
-    }
-
-    .win-hero {
-      position: relative;
-      border-radius: var(--radius);
-      overflow: hidden;
-      border: 1px solid rgba(255,209,102,0.4);
-      box-shadow: 0 32px 90px rgba(0,0,0,0.5);
-      background:
-        radial-gradient(circle at 50% 0%, rgba(255,209,102,0.35), transparent 55%),
-        radial-gradient(circle at 10% 90%, rgba(255,90,0,0.25), transparent 45%),
-        radial-gradient(circle at 90% 80%, rgba(255,90,0,0.2), transparent 40%),
-        linear-gradient(160deg, #0d0a00 0%, #1a1200 50%, #0d0800 100%);
-      margin-bottom: 18px;
-    }
-
-    /* star-burst shimmer */
-    .win-hero::before {
-      content: "";
-      position: absolute;
-      top: -40%; left: -60%;
-      width: 50%; height: 200%;
-      transform: rotate(18deg);
-      background: linear-gradient(90deg, transparent, rgba(255,230,140,0.12), transparent);
-      animation: wcpopSheen 5s ease-in-out infinite;
-      pointer-events: none;
-    }
-
-    .win-hero-inner {
-      position: relative;
-      z-index: 1;
-      padding: 42px 32px 36px;
-      text-align: center;
-    }
-
-    .win-trophy { font-size: 72px; line-height: 1; filter: drop-shadow(0 12px 30px rgba(255,209,102,0.6)); animation: wcpopFloat 3.5s ease-in-out infinite; }
-
-    .win-country-flag {
-      display: block;
-      height: 80px;
-      margin: 18px auto 0;
-      border-radius: 6px;
-      box-shadow: 0 12px 36px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,209,102,0.4);
-    }
-
-    .win-title {
-      font-family: Oswald, Inter, sans-serif;
-      font-size: clamp(48px, 9vw, 96px);
-      font-weight: 700;
-      line-height: 0.9;
-      letter-spacing: -2px;
-      text-transform: uppercase;
-      margin: 16px 0 4px;
-      background: linear-gradient(180deg, #fff 20%, #ffd166 65%, #ff8a00);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      filter: drop-shadow(0 4px 20px rgba(255,180,40,0.4));
-    }
-
-    .win-subtitle {
-      font-family: Oswald, Inter, sans-serif;
-      font-size: clamp(16px, 2.5vw, 24px);
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      color: var(--gold);
-      margin-bottom: 6px;
-    }
-
-    .win-final-score {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      margin: 22px auto 0;
-      padding: 14px 28px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,209,102,0.4);
-      background: rgba(0,0,0,0.35);
-    }
-
-    .win-final-score .team { font-weight: 900; font-size: 18px; }
-    .win-final-score .score {
-      font-family: Oswald, Inter, sans-serif;
-      font-size: 36px;
-      font-weight: 700;
-      letter-spacing: -1px;
-      color: var(--gold);
-    }
-    .win-final-score .detail { font-size: 11px; color: var(--gxo-muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
-    .win-scorer { margin-top: 10px; font-size: 14px; color: var(--gxo-muted); }
-    .win-scorer b { color: #fff; }
-
-    /* confetti */
-    .win-confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: var(--radius); }
-    .win-confetti i {
-      position: absolute; top: -16px; width: 7px; height: 16px; border-radius: 3px; opacity: 0;
-      animation: wcpopFall 3s linear infinite;
-    }
-
-    /* Awards row */
-    .win-awards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 14px;
-      margin-bottom: 18px;
-    }
-
-    .win-award {
-      padding: 20px 18px;
-      border-radius: 22px;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: linear-gradient(135deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04));
-      backdrop-filter: blur(12px);
-      text-align: center;
-    }
-
-    .win-award-icon { font-size: 36px; line-height: 1; }
-    .win-award-label {
-      font-family: Oswald, Inter, sans-serif;
-      font-size: 11px;
-      letter-spacing: 2.5px;
-      text-transform: uppercase;
-      color: var(--gold);
-      font-weight: 700;
-      margin: 10px 0 4px;
-    }
-    .win-award-name { font-weight: 900; font-size: 17px; }
-    .win-award-stat { color: var(--gxo-muted); font-size: 12px; margin-top: 4px; }
-
-    /* Facts grid */
-    .win-facts {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 14px;
-      margin-bottom: 18px;
-    }
-
-    .win-fact {
-      padding: 18px 20px;
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
-      backdrop-filter: blur(10px);
-    }
-
-    .win-fact-num {
-      font-family: Oswald, Inter, sans-serif;
-      font-size: 42px;
-      font-weight: 700;
-      line-height: 1;
-      letter-spacing: -1px;
-      color: var(--gold);
-    }
-    .win-fact-label { font-weight: 800; font-size: 14px; margin: 6px 0 4px; }
-    .win-fact-desc { color: var(--gxo-muted); font-size: 13px; line-height: 1.5; }
-
-    /* Sweepstake result */
-    .win-sweep {
-      padding: 24px 26px;
-      border-radius: 22px;
-      border: 1px solid rgba(25,195,125,0.35);
-      background: linear-gradient(135deg, rgba(25,195,125,0.14), rgba(255,255,255,0.04));
-      margin-bottom: 18px;
-    }
-    .win-sweep h3 {
-      margin: 0 0 14px;
-      font-family: Oswald, Inter, sans-serif;
-      font-size: 26px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--gxo-green);
-    }
-    .win-sweep-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
-    .win-sweep-card {
-      padding: 14px 16px;
-      border-radius: 16px;
-      background: rgba(0,0,0,0.28);
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-    .win-sweep-card.winner {
-      background: linear-gradient(135deg, rgba(255,209,102,0.2), rgba(255,209,102,0.05));
-      border-color: rgba(255,209,102,0.5);
-    }
-    .win-sweep-card .wsc-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gxo-muted); font-weight: 800; }
-    .win-sweep-card .wsc-name { font-weight: 900; font-size: 18px; margin: 4px 0 2px; }
-    .win-sweep-card .wsc-team { color: var(--gold); font-size: 13px; font-weight: 800; }
-    .win-sweep-card.winner .wsc-label { color: var(--gold); }
-
-    @media (max-width: 640px) {
-      .win-hero-inner { padding: 28px 18px 24px; }
-      .win-trophy { font-size: 52px; }
-      .win-country-flag { height: 56px; }
-      .win-final-score .team { font-size: 14px; }
-      .win-final-score .score { font-size: 28px; }
-    }
-
-    @media (max-width: 1050px) {
-      header, .grid, .admin-grid { grid-template-columns: 1fr; }
-      .tabs { justify-content: flex-start; }
-      .groups { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    @media (max-width: 640px) {
-      .app { width: min(100% - 18px, 1420px); padding-top: 10px; }
-      header, .panel { padding: 16px; border-radius: 20px; }
-      .brand { align-items: flex-start; }
-      .logo-mark { width: 54px; height: 54px; border-radius: 16px; font-size: 18px; }
-      .form-row { grid-template-columns: 1fr; }
-      .groups, .stat-row { grid-template-columns: 1fr; }
-      .pot { grid-template-columns: 1fr; }
-      .pot-meta { text-align: left; }
-    }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>The Object File</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+
+  :root{
+    --ink:#14171f;
+    --ink-2:#1c202b;
+    --paper:#ece4d0;
+    --paper-2:#e2d8bd;
+    --brass:#b8863b;
+    --brass-light:#d8a75c;
+    --redline:#a13a3a;
+    --slate:#5b6270;
+    --charcoal:#22232a;
+  }
+  *{box-sizing:border-box;}
+  html{ -webkit-text-size-adjust:100%; }
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 20% 10%, #1b2030 0%, transparent 45%),
+      radial-gradient(circle at 80% 90%, #1a1e2a 0%, transparent 40%),
+      var(--ink);
+    color:var(--charcoal);
+    font-family:'IBM Plex Mono', monospace;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:clamp(12px, 5vw, 40px) clamp(8px, 3vw, 16px);
+  }
+  .file{
+    width:100%;
+    max-width:560px;
+    background:var(--paper);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.015) 0px, rgba(0,0,0,0.015) 1px, transparent 1px, transparent 3px);
+    border-radius:2px;
+    box-shadow:0 30px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.08);
+    position:relative;
+    overflow:hidden;
+  }
+  .file::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:10px;
+    background:repeating-linear-gradient(90deg, var(--ink) 0 14px, transparent 14px 22px);
+    opacity:0.9;
+  }
+  .tab{
+    position:absolute; top:14px; right:26px;
+    font-family:'Special Elite', monospace;
+    color:var(--redline);
+    border:2px solid var(--redline);
+    padding:4px 10px;
+    font-size:11px;
+    letter-spacing:2px;
+    transform:rotate(4deg);
+    border-radius:2px;
+    background:rgba(161,58,58,0.05);
+  }
+  .top-admin-link{
+    position:absolute; top:16px; left:22px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--slate);
+    cursor:pointer;
+    z-index:5;
+    text-decoration:none;
+    border-bottom:1px dotted var(--slate);
+    padding-bottom:1px;
+  }
+  .top-admin-link:hover{ color:var(--charcoal); border-color:var(--charcoal); }
+  .header{
+    padding:44px clamp(16px, 6vw, 32px) 10px;
+    border-bottom:1px dashed rgba(0,0,0,0.25);
+  }
+  .eyebrow{
+    font-size:11px;
+    letter-spacing:3px;
+    color:var(--slate);
+    text-transform:uppercase;
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Special Elite', monospace;
+    font-size:clamp(22px, 6vw, 30px);
+    margin:0 0 6px;
+    color:var(--charcoal);
+    letter-spacing:1px;
+  }
+  .sub{ font-size:12.5px; color:var(--slate); margin:0 0 18px; line-height:1.5; }
+  .body-pad{ padding:22px clamp(16px, 6vw, 32px) 34px; }
+
+  .aperture-wrap{
+    display:flex; flex-direction:column; align-items:center;
+    margin:6px 0 22px;
+  }
+  .aperture{
+    width:clamp(160px, 55vw, 260px); height:clamp(160px, 55vw, 260px); border-radius:50%;
+    overflow:hidden;
+    background:var(--ink-2);
+    position:relative;
+    box-shadow:
+      0 0 0 4px var(--paper),
+      0 0 0 6px var(--brass),
+      0 0 0 8px var(--paper),
+      inset 0 0 40px rgba(0,0,0,0.6);
+  }
+  .aperture img{
+    width:100%; height:100%; object-fit:cover;
+    transition:transform 1.2s ease;
+    display:block;
+  }
+  .aperture .empty{
+    width:100%; height:100%;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--slate); font-size:12px; text-align:center; padding:20px;
+  }
+  .ring-label{
+    margin-top:14px;
+    font-family:'Special Elite', monospace;
+    font-size:13px;
+    color:var(--brass);
+    letter-spacing:2px;
+  }
+  .day-progress{
+    display:flex; gap:4px; margin-top:10px;
+  }
+  .dot{ width:8px; height:8px; border-radius:50%; background:rgba(0,0,0,0.15); }
+  .dot.filled{ background:var(--brass); }
+
+  .divider{
+    display:flex; align-items:center; gap:10px; margin:22px 0 18px;
+    color:var(--slate); font-size:10px; letter-spacing:2px;
+  }
+  .divider::before, .divider::after{ content:""; flex:1; height:1px; background:rgba(0,0,0,0.2); }
+
+  .seal-row{
+    display:flex; align-items:center; justify-content:center; gap:22px;
+    margin-top:6px;
+    flex-wrap:wrap;
+    text-align:center;
+  }
+  #qrcode{
+    padding:10px; background:#fff; border-radius:4px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.2);
+  }
+  #qrcode img{ display:block; }
+  .scan-note{ font-size:11px; color:var(--slate); max-width:160px; line-height:1.5; }
+  .scan-note b{ color:var(--charcoal); }
+
+  .winner-banner{
+    margin-top:22px; padding:14px 16px;
+    background:rgba(184,134,59,0.12);
+    border:1px solid var(--brass);
+    border-radius:3px;
+    font-size:12.5px;
+    color:var(--charcoal);
+  }
+  .winner-banner b{ color:var(--brass); }
+
+  /* Submit view */
+  form{ display:flex; flex-direction:column; gap:14px; }
+  label{ font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--slate); }
+  input[type=text], input[type=password], input[type=email], input[type=number], input[type=datetime-local]{
+    font-family:'IBM Plex Mono', monospace;
+    padding:11px 12px; border:1px solid rgba(0,0,0,0.25);
+    background:#fdfbf5; border-radius:2px; font-size:14px; color:var(--charcoal);
+  }
+  input:focus{ outline:2px solid var(--brass); outline-offset:1px; }
+  button{
+    font-family:'Special Elite', monospace;
+    letter-spacing:1.5px;
+    font-size:14px;
+    padding:12px 16px;
+    background:var(--charcoal);
+    color:var(--paper);
+    border:none; border-radius:2px; cursor:pointer;
+  }
+  button:hover{ background:#000; }
+  button.secondary{ background:transparent; color:var(--charcoal); border:1px solid rgba(0,0,0,0.3); }
+  .msg{ font-size:12.5px; padding:10px 12px; border-radius:2px; margin-top:4px; }
+  .msg.ok{ background:rgba(90,140,90,0.15); color:#2d5a2d; border:1px solid rgba(90,140,90,0.4); }
+  .msg.err{ background:rgba(161,58,58,0.1); color:var(--redline); border:1px solid rgba(161,58,58,0.4); }
+
+  /* Admin view */
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .table-wrap{ width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  table{ width:100%; min-width:420px; border-collapse:collapse; font-size:12px; margin-top:10px; }
+  th, td{ text-align:left; padding:8px 6px; border-bottom:1px solid rgba(0,0,0,0.12); vertical-align:top; }
+  th{ color:var(--slate); font-weight:600; text-transform:uppercase; font-size:10px; letter-spacing:1px; }
+  tr.correct td{ background:rgba(184,134,59,0.08); }
+  .stamp-correct{ color:var(--brass); font-weight:700; }
+  .lock-btn{ padding:6px 10px; font-size:11px; }
+  .locked-row td{ opacity:0.5; }
+  .nav-link{ font-size:11px; color:var(--slate); text-decoration:underline; cursor:pointer; }
+  .section-title{ font-family:'Special Elite', monospace; font-size:15px; margin:22px 0 8px; color:var(--charcoal); }
+  .small-note{ font-size:11px; color:var(--slate); }
+  .admin-topbar{ display:flex; justify-content:space-between; align-items:center; }
+
+  @media (max-width: 480px){
+    .top-admin-link{ top:12px; left:14px; font-size:9.5px; letter-spacing:1px; }
+    .tab{ top:12px; right:14px; font-size:9.5px; padding:3px 7px; letter-spacing:1.5px; }
+    .header{ padding-top:40px; }
+    h1{ line-height:1.15; }
+    .day-progress{ flex-wrap:wrap; justify-content:center; max-width:220px; }
+    .grid2{ grid-template-columns:1fr; }
+    button{ width:100%; }
+    .winner-banner{ font-size:12px; }
+    th, td{ padding:7px 5px; }
+  }
+
+  @media (max-width: 360px){
+    .aperture{ width:52vw; height:52vw; }
+  }
+</style>
 </head>
 <body>
-  <!--
-    Background video.
-    To change the clip: download an .mp4 from pexels.com/videos or coverr.co,
-    drop it into your repo (alongside index.html), and update the src below to
-    something like "/your-clip.mp4". The CSS gradient overlay sits on top of
-    it, so almost any football clip will look good. If the video fails to load
-    the gradient background takes over and the page still looks great.
-  -->
-  <video class="bg-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
-    <source src="/15439491-uhd_1920_1440_30fps.mp4" type="video/mp4">
-  </video>
-  <div class="bg-overlay" aria-hidden="true"></div>
+<div class="file" id="file">
+  <a class="top-admin-link" onclick="location.hash='admin'">⚙ Admin</a>
+  <div class="tab">EXHIBIT&nbsp;A</div>
+  <div id="app"></div>
+</div>
 
-  <div class="app">
-    <header>
-      <div class="brand">
-        <div class="logo-mark">GXO</div>
+<script>
+const $ = (sel, root=document) => root.querySelector(sel);
+
+// ---------- Firebase setup ----------
+const firebaseConfig = {
+  apiKey: "AIzaSyBDRJyy5Y1Q6hUBinUitHkUVf147JfHi4M",
+  authDomain: "guess-c948f.firebaseapp.com",
+  databaseURL: "https://guess-c948f-default-rtdb.firebaseio.com/",
+  projectId: "guess-c948f",
+  storageBucket: "guess-c948f.firebasestorage.app",
+  messagingSenderId: "324058967053",
+  appId: "1:324058967053:web:06ff962b3c90c869203944"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const auth = firebase.auth();
+// keep sign-in state in memory only for this session (no browser storage)
+auth.setPersistence(firebase.auth.Auth.Persistence.NONE).catch(() => {});
+
+// ---------- data helpers ----------
+async function getConfig(){
+  const snap = await db.ref('config').once('value');
+  return snap.exists() ? snap.val() : null;
+}
+async function saveConfig(cfg){
+  return db.ref('config').set(cfg);
+}
+async function getGuesses(){
+  const snap = await db.ref('guesses').once('value');
+  if(!snap.exists()) return [];
+  const val = snap.val();
+  return Object.keys(val).map(id => ({ id, ...val[id] }));
+}
+async function addGuess(entry){
+  return db.ref('guesses').push(entry);
+}
+async function getWinner(){
+  const snap = await db.ref('winner').once('value');
+  return snap.exists() ? snap.val() : null;
+}
+async function saveWinner(w){
+  if(w === null) return db.ref('winner').remove();
+  return db.ref('winner').set(w);
+}
+
+function baseUrl(){
+  return window.location.href.split('#')[0];
+}
+
+function fmtDate(ts){
+  const d = new Date(ts);
+  return d.toLocaleString(undefined, {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+}
+
+function computeZoom(cfg){
+  const start = new Date(cfg.startTime).getTime();
+  const now = Date.now();
+  const elapsedDays = Math.max(0, (now - start) / (1000*60*60*24));
+  const totalDays = cfg.totalDays || 7;
+  const maxZoom = cfg.maxZoom || 6;
+  const t = Math.min(elapsedDays / totalDays, 1);
+  const scale = maxZoom - t * (maxZoom - 1);
+  const dayNumber = Math.min(Math.floor(elapsedDays) + 1, totalDays);
+  return { scale, dayNumber, totalDays, fullyRevealed: t >= 1 };
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Loosely normalize a guess so spacing/punctuation/case differences don't
+// matter: "Fork-Lift", "fork lift", and "forklift" all become "forklift".
+function normalizeGuess(s){
+  return String(s)
+    .toLowerCase()
+    .normalize('NFKD').replace(/[\u0300-\u036f]/g, '') // strip accents
+    .replace(/[^a-z0-9]/g, ''); // strip spaces, hyphens, punctuation
+}
+
+// ---------- views ----------
+async function renderGame(){
+  const app = $('#app');
+  const cfg = await getConfig();
+  const winner = await getWinner();
+
+  if(!cfg || !cfg.imageUrl || !cfg.startTime){
+    app.innerHTML = `
+      <div class="header">
+        <p class="eyebrow">Case File · Unopened</p>
+        <h1>The Object File</h1>
+        <p class="sub">No case has been loaded yet.</p>
+      </div>
+      <div class="body-pad">
+        <p class="small-note">The game admin needs to set this up first.</p>
+        <a class="nav-link" onclick="location.hash='admin'">Go to admin setup →</a>
+      </div>`;
+    return;
+  }
+
+  const zoom = computeZoom(cfg);
+  const qrTarget = baseUrl() + '#submit';
+
+  app.innerHTML = `
+    <div class="header">
+      <p class="eyebrow">Case File · Day ${zoom.dayNumber} of ${zoom.totalDays}</p>
+      <h1>Guess the Object</h1>
+      <p class="sub">A little more of the picture is uncovered every 24 hours. Scan the seal below to log your guess.</p>
+    </div>
+    <div class="body-pad">
+      <div class="aperture-wrap">
+        <div class="aperture">
+          <img id="theImage" src="${cfg.imageUrl}" style="transform:scale(${zoom.scale})" alt="Mystery object"/>
+        </div>
+        <div class="ring-label">${zoom.fullyRevealed ? 'FULLY REVEALED' : 'ZOOM LEVEL ' + zoom.scale.toFixed(2) + '×'}</div>
+        <div class="day-progress" id="dayDots"></div>
+      </div>
+
+      ${winner ? `<div class="winner-banner">🏆 <b>Solved.</b> ${escapeHtml(winner.name)} correctly identified the object${winner.timestamp ? ' on ' + fmtDate(winner.timestamp) : ''}.</div>` : ''}
+
+      <div class="divider">SUBMIT A GUESS</div>
+      <div class="seal-row">
+        <div id="qrcode"></div>
+        <div class="scan-note"><b>Scan this code</b> with your phone camera to open the guess form and enter your name + guess.</div>
+      </div>
+      <p class="small-note" style="text-align:center; margin-top:14px;">
+        Or open it directly: <a class="nav-link" onclick="location.hash='submit'">go to guess form →</a>
+      </p>
+    </div>
+  `;
+
+  const dots = $('#dayDots');
+  for(let i=0;i<zoom.totalDays;i++){
+    const d = document.createElement('div');
+    d.className = 'dot' + (i < zoom.dayNumber ? ' filled' : '');
+    dots.appendChild(d);
+  }
+
+  new QRCode(document.getElementById('qrcode'), {
+    text: qrTarget, width: 120, height: 120,
+    colorDark:'#22232a', colorLight:'#ffffff'
+  });
+}
+
+async function renderSubmit(){
+  const app = $('#app');
+  const cfg = await getConfig();
+  const winner = await getWinner();
+
+  app.innerHTML = `
+    <div class="header">
+      <p class="eyebrow">Guess Form</p>
+      <h1>Submit Your Guess</h1>
+      <p class="sub">Enter your name and what you think the object is. One guess is logged each time you submit.</p>
+    </div>
+    <div class="body-pad">
+      ${winner ? `<div class="winner-banner">🏆 This case has already been solved by <b>${escapeHtml(winner.name)}</b>. Guesses are still logged for fun.</div>` : ''}
+      <form id="guessForm">
         <div>
-          <h1>World Cup Sweepstake</h1>
-          <div class="subtitle">Entries are closed — the draw is done and the tournament is live. Follow today's matches, watch the pot, and see whose teams are still in the hunt. Good luck everyone!</div>
-          <div class="football-strip"><i></i><i></i><i></i><i></i><i></i></div>
+          <label>Your name</label>
+          <input type="text" id="gname" required maxlength="60" placeholder="e.g. Sam"/>
+        </div>
+        <div>
+          <label>Your guess</label>
+          <input type="text" id="gguess" required maxlength="120" placeholder="What is it?"/>
+        </div>
+        <button type="submit">Submit Guess</button>
+      </form>
+      <div id="formMsg"></div>
+      <p class="small-note" style="margin-top:18px;"><a class="nav-link" onclick="location.hash=''">← back to the case file</a></p>
+    </div>
+  `;
+
+  $('#guessForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = $('#gname').value.trim();
+    const guess = $('#gguess').value.trim();
+    const msgEl = $('#formMsg');
+    if(!name || !guess) return;
+
+    try{
+      const acceptedAnswers = (cfg && cfg.answer ? cfg.answer.split(',') : [])
+        .map(a => normalizeGuess(a))
+        .filter(Boolean);
+      const isCorrect = acceptedAnswers.includes(normalizeGuess(guess));
+      await addGuess({ name, guess, timestamp: Date.now(), correct: isCorrect });
+      msgEl.innerHTML = `<div class="msg ok">Logged it, ${escapeHtml(name)}. Thanks for playing — check back tomorrow for a bit more of the picture.</div>`;
+      $('#guessForm').reset();
+    }catch(err){
+      msgEl.innerHTML = `<div class="msg err">Something went wrong saving your guess. Please try again.</div>`;
+    }
+  });
+}
+
+async function renderAdmin(){
+  const app = $('#app');
+
+  // Not signed in -> Firebase Auth login form. The password check happens
+  // entirely on Firebase's servers; no password is ever stored or readable
+  // in this page's code, config, or network responses.
+  if(!auth.currentUser){
+    app.innerHTML = `
+      <div class="header">
+        <p class="eyebrow">Admin</p>
+        <h1>Admin Sign In</h1>
+        <p class="sub">This is the game runner's control panel, secured by Firebase Authentication.</p>
+      </div>
+      <div class="body-pad">
+        <form id="loginForm">
+          <div>
+            <label>Email</label>
+            <input type="email" id="loginEmail" required/>
+          </div>
+          <div>
+            <label>Password</label>
+            <input type="password" id="loginPassword" required/>
+          </div>
+          <button type="submit">Sign In</button>
+        </form>
+        <div id="loginMsg"></div>
+        <p class="small-note" style="margin-top:18px;"><a class="nav-link" onclick="location.hash=''">← back to the case file</a></p>
+      </div>`;
+
+    $('#loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = $('#loginEmail').value.trim();
+      const password = $('#loginPassword').value;
+      const msgEl = $('#loginMsg');
+      msgEl.innerHTML = `<div class="small-note">Signing in…</div>`;
+      try{
+        await auth.signInWithEmailAndPassword(email, password);
+        renderAdmin();
+      }catch(err){
+        msgEl.innerHTML = `<div class="msg err">Sign in failed: ${escapeHtml(err.message || 'check your email and password')}</div>`;
+      }
+    });
+    return;
+  }
+
+  const cfg = await getConfig();
+
+  if(!cfg){
+    app.innerHTML = `
+      <div class="header admin-topbar">
+        <div>
+          <p class="eyebrow">Admin</p>
+          <h1>Set Up the Case</h1>
         </div>
       </div>
-      <nav class="tabs">
-        <button class="tab active" data-page="pickerPage">Matchday</button>
-        <button class="tab tab-england" data-page="englandPage">🏴󠁧󠁢󠁥󠁮󠁧󠁿 England</button>
-        <button class="tab tab-winners" data-page="winnersPage">🏆 Winners</button>
-        <button class="tab" data-page="bracketPage">Team Brackets</button>
-        <button class="tab" data-page="fixturesPage">Fixtures</button>
-        <button class="tab" data-page="adminPage">Admin</button>
-      </nav>
-    </header>
-
-    <main>
-      <section id="pickerPage" class="page active">
-
-        <div class="pot">
-          <div>
-            <div class="pot-label">Prize Pot · Locked In</div>
-            <div class="pot-amount" id="potAmount">£0</div>
-          </div>
-          <div class="pot-meta">
-            <b id="potEntries">0 entries</b>
-            Winner takes half · half to Andy's Man Club
-          </div>
-        </div>
-
-        <div class="today-widget" id="todayWidget" style="display:none;">
-          <div class="today-header">
-            <div>
-              <div class="today-label">Today's matches</div>
-              <div class="today-date" id="todayDate"></div>
-            </div>
-            <div class="today-our-count" id="todayOurCount"></div>
-          </div>
-          <div class="today-matches" id="todayMatches"></div>
-        </div>
-
-        <div class="grid">
-          <div class="panel">
-            <h2>Tournament Tracker</h2>
-            <div id="lockBanner" class="lock-banner"></div>
-            <div class="draw-done">
-              <div class="ball">⚽</div>
-              <h3>The Draw Is Done</h3>
-              <p>Every entry is in and the teams are locked. From here it's all about the football — today's games show above, and the full schedule lives in Fixtures. Matches with one of our teams are highlighted in gold.</p>
-              <div class="toolbar" style="justify-content:center; margin:18px 0 0;">
-                <button class="primary" id="goFixturesBtn">See all fixtures →</button>
-                <button id="goBracketsBtn">Who has which team?</button>
-              </div>
-            </div>
-            <div class="stat-row">
-              <div class="stat"><span>Total Entries</span><b id="totalPicks">0</b></div>
-              <div class="stat"><span>Teams Still In</span><b id="teamsUsed">0</b></div>
-              <div class="stat"><span>Players In</span><b id="playersCount">0</b></div>
-            </div>
-          </div>
-
-          <div class="panel">
-            <h2>Live Board</h2>
-            <p>Everyone in the sweepstake, grouped by person. Each chip is one £2 entry. Knocked-out teams are struck through.</p>
-            <div class="leaderboard" id="leaderboard"></div>
-          </div>
-        </div>
-      </section>
-
-      <section id="englandPage" class="page">
-        <button class="eng-back" id="engBackBtn">← Back to sweepstake</button>
-        <div class="eng-stage" id="engStage">
-          <div class="eng-empty" id="engEmpty">Finding England's next match…</div>
-        </div>
-      </section>
-
-      <section id="winnersPage" class="page">
-        <button class="win-back" id="winBackBtn">← Back to sweepstake</button>
-        <div id="winnersContent"></div>
-      </section>
-
-      <section id="bracketPage" class="page">
-        <div class="panel">
-          <h2>Team Brackets</h2>
-          <p>Grouped by World Cup group. The number next to each team shows how many entries hold that team. Teams that have gone out are marked OUT.</p>
-          <div class="toolbar">
-            <button class="primary" id="sortGroupBtn">Group View</button>
-            <button id="sortCountBtn">Most Picked</button>
-            <button id="sortAliveBtn">Still In</button>
-          </div>
-          <div class="groups" id="groups"></div>
-        </div>
-      </section>
-
-      <section id="fixturesPage" class="page">
-        <div class="panel">
-          <h2>World Cup 2026 Fixtures</h2>
-          <p>All 104 matches with UK kick-off times. <b>11 June – 19 July 2026</b> · USA, Canada &amp; Mexico. Matches involving teams picked in this sweepstake are highlighted in gold.</p>
-
-          <div class="toolbar">
-            <button class="primary" id="fixturesAllBtn">All matches</button>
-            <button id="fixturesPickedBtn">Our teams only</button>
-            <button id="fixturesGroupOnlyBtn">Group stage</button>
-            <button id="fixturesKoOnlyBtn">Knockouts</button>
-          </div>
-
-          <div id="fixturesList" class="fixtures-list"></div>
-
-          <div class="fixture-keydates" style="margin-top:18px;">
-            <h3>Key dates</h3>
-            <div class="keydates-grid">
-              <div><b>Group stage</b><span>11 – 27 June</span></div>
-              <div><b>Round of 32</b><span>28 June – 3 July</span></div>
-              <div><b>Round of 16</b><span>4 – 7 July</span></div>
-              <div><b>Quarter-finals</b><span>9 – 11 July</span></div>
-              <div><b>Semi-finals</b><span>14 – 15 July</span></div>
-              <div><b>Final</b><span>19 July · MetLife Stadium</span></div>
-            </div>
-          </div>
-
-          <p class="small" style="margin-top:16px;">Fixture list: Sky Sports / FIFA · live scores and knockout ties: ESPN · times shown in UK time (BST). Knockout fixtures fill in with real teams as soon as ESPN publishes each draw. <a href="https://www.skysports.com/world-cup-fixtures" target="_blank" rel="noopener noreferrer" style="color:var(--gold);">Open live source →</a></p>
-        </div>
-      </section>
-
-      <section id="adminPage" class="page">
-        <div id="adminLock" class="panel admin-lock">
-          <h2>Admin Login</h2>
-          <p>Enter the admin PIN to manage teams and entries. Change the PIN inside the code before putting this live.</p>
-          <div class="form-row">
-            <input id="adminPin" type="password" placeholder="Admin PIN" />
-            <button class="primary" id="loginBtn">Unlock</button>
-          </div>
-        </div>
-
-        <div id="adminContent" style="display:none;">
-          <div class="admin-grid">
-            <div class="panel">
-              <h2>Team Setup</h2>
-              <p>One team per line. Use “Group | Team”, for example: Group A | England. Save will replace the current team list.</p>
-              <textarea id="teamsInput"></textarea>
-              <div class="toolbar">
-                <button class="primary" id="saveTeamsBtn">Save Teams</button>
-                <button id="loadDefaultBtn">Load 2026 Groups</button>
-              </div>
-            </div>
-
-            <div class="panel">
-              <h2>Manual Entry</h2>
-              <p>Entries are closed for everyone else, but admins can still fix mistakes here — add a missed entry or assign a specific team.</p>
-              <input id="manualName" placeholder="Name" style="margin-bottom:10px;" />
-              <select id="manualTeam" style="margin-bottom:10px;"></select>
-              <div class="toolbar">
-                <button class="success" id="manualAddBtn">Add Entry (+£2)</button>
-              </div>
-              <h2 style="margin-top:22px;">Admin Actions</h2>
-              <div class="toolbar">
-                <button class="danger" id="clearEntriesBtn">Clear All Picks</button>
-                <button class="ghost" id="exportCsvBtn">Export CSV</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="panel" style="margin-top:18px;">
-            <h2>Manage Entries</h2>
-            <div class="entries-list" id="adminEntries"></div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <div class="footer-note">Built for GXO teams. Frontend: GitHub/Vercel. Backend: Firebase Realtime Database.</div>
-  </div>
-
-  <div class="toast" id="toast"></div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import {
-      getDatabase,
-      ref,
-      push,
-      set,
-      update,
-      remove,
-      get,
-      onValue,
-      serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBa_jskIfzTq1p3tfDihKcw2PIdnbqHUeg",
-      authDomain: "worldcup-7b648.firebaseapp.com",
-      projectId: "worldcup-7b648",
-      databaseURL: "https://worldcup-7b648-default-rtdb.firebaseio.com/",
-      storageBucket: "worldcup-7b648.appspot.com",
-      messagingSenderId: "594251153437",
-      appId: "1:594251153437:web:782b7c8808f63c269d46f4"
-    };
-
-    // Admin PIN is stored as a SHA-256 hash so the actual value isn't visible
-    // when someone opens DevTools. To change it, run in any browser console:
-    //   crypto.subtle.digest("SHA-256", new TextEncoder().encode("YOUR_NEW_PIN"))
-    //     .then(b => console.log([...new Uint8Array(b)].map(x => x.toString(16).padStart(2,"0")).join("")));
-    const ADMIN_PIN_HASH = "e2ebbd28c986d16d8457ba7ae066cedd112f0d6a48f3556552b909cd33215f09";
-
-    async function hashPin(pin) {
-      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pin));
-      return [...new Uint8Array(buf)].map(x => x.toString(16).padStart(2, "0")).join("");
-    }
-    const ENTRY_PRICE = 2; // £ per entry — change here if needed
-
-    // === ENTRIES ARE NOW CLOSED ===
-    // The public picker has been removed: the tournament has kicked off and
-    // the draw is final. Admins can still add/fix entries from the Admin tab.
-    const ENTRIES_CLOSED = true;
-
-    // ISO 3166-1 alpha-2 codes for each World Cup 2026 team (gb-eng / gb-sct for subdivisions)
-    const TEAM_FLAGS = {
-      "Mexico": "mx", "South Africa": "za", "Korea Republic": "kr", "South Korea": "kr", "Czechia": "cz", "Czech Republic": "cz",
-      "Canada": "ca", "Qatar": "qa", "Switzerland": "ch", "Bosnia and Herzegovina": "ba", "Bosnia & Herzegovina": "ba",
-      "Brazil": "br", "Morocco": "ma", "Haiti": "ht", "Scotland": "gb-sct",
-      "USA": "us", "Paraguay": "py", "Australia": "au", "Türkiye": "tr", "Turkey": "tr",
-      "Germany": "de", "Curaçao": "cw", "Curacao": "cw", "Côte d'Ivoire": "ci", "Ivory Coast": "ci", "Ecuador": "ec",
-      "Netherlands": "nl", "Japan": "jp", "Sweden": "se", "Tunisia": "tn",
-      "Belgium": "be", "Egypt": "eg", "IR Iran": "ir", "Iran": "ir", "New Zealand": "nz",
-      "Spain": "es", "Cabo Verde": "cv", "Cape Verde": "cv", "Saudi Arabia": "sa", "Uruguay": "uy",
-      "France": "fr", "Senegal": "sn", "Iraq": "iq", "Norway": "no",
-      "Argentina": "ar", "VARgentina": "ar", "Algeria": "dz", "Austria": "at", "Jordan": "jo",
-      "Portugal": "pt", "Congo DR": "cd", "DR Congo": "cd", "Uzbekistan": "uz", "Colombia": "co",
-      "England": "gb-eng", "Croatia": "hr", "Ghana": "gh", "Panama": "pa"
-    };
-
-    // Handles our names, ESPN's names, and the fixture-list variants.
-    function flagFor(teamName) {
-      const code = TEAM_FLAGS[teamName]
-        || TEAM_FLAGS[ESPN_NAME_ALIASES[teamName]]
-        || TEAM_FLAGS[normaliseTeam(teamName)];
-      if (!code) return "";
-      // h40 = 40px tall, retina-friendly via srcset
-      return `<img class="flag" src="https://flagcdn.com/h40/${code}.png" srcset="https://flagcdn.com/h80/${code}.png 2x" alt="" loading="lazy">`;
-    }
-
-    let adminUnlocked = false;
-
-    const DEFAULT_TEAMS = [
-      { group: "Group A", name: "Mexico" },
-      { group: "Group A", name: "South Africa" },
-      { group: "Group A", name: "Korea Republic" },
-      { group: "Group A", name: "Czechia" },
-      { group: "Group B", name: "Canada" },
-      { group: "Group B", name: "Qatar" },
-      { group: "Group B", name: "Switzerland" },
-      { group: "Group B", name: "Bosnia and Herzegovina" },
-      { group: "Group C", name: "Brazil" },
-      { group: "Group C", name: "Morocco" },
-      { group: "Group C", name: "Haiti" },
-      { group: "Group C", name: "Scotland" },
-      { group: "Group D", name: "USA" },
-      { group: "Group D", name: "Paraguay" },
-      { group: "Group D", name: "Australia" },
-      { group: "Group D", name: "Türkiye" },
-      { group: "Group E", name: "Germany" },
-      { group: "Group E", name: "Curaçao" },
-      { group: "Group E", name: "Côte d'Ivoire" },
-      { group: "Group E", name: "Ecuador" },
-      { group: "Group F", name: "Netherlands" },
-      { group: "Group F", name: "Japan" },
-      { group: "Group F", name: "Sweden" },
-      { group: "Group F", name: "Tunisia" },
-      { group: "Group G", name: "Belgium" },
-      { group: "Group G", name: "Egypt" },
-      { group: "Group G", name: "IR Iran" },
-      { group: "Group G", name: "New Zealand" },
-      { group: "Group H", name: "Spain" },
-      { group: "Group H", name: "Cabo Verde" },
-      { group: "Group H", name: "Saudi Arabia" },
-      { group: "Group H", name: "Uruguay" },
-      { group: "Group I", name: "France" },
-      { group: "Group I", name: "Senegal" },
-      { group: "Group I", name: "Iraq" },
-      { group: "Group I", name: "Norway" },
-      { group: "Group J", name: "VARgentina" },
-      { group: "Group J", name: "Algeria" },
-      { group: "Group J", name: "Austria" },
-      { group: "Group J", name: "Jordan" },
-      { group: "Group K", name: "Portugal" },
-      { group: "Group K", name: "Congo DR" },
-      { group: "Group K", name: "Uzbekistan" },
-      { group: "Group K", name: "Colombia" },
-      { group: "Group L", name: "England" },
-      { group: "Group L", name: "Croatia" },
-      { group: "Group L", name: "Ghana" },
-      { group: "Group L", name: "Panama" }
-    ];
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    const teamsRef = ref(db, "worldcup_teams");
-    const entriesRef = ref(db, "worldcup_entries");
-
-    let teams = [];
-    let entries = [];
-    let bracketMode = "group";
-    let adminIsEditingTeams = false;
-    let lastEntriesCount = 0;
-
-    const $ = (selector) => document.querySelector(selector);
-    const $$ = (selector) => [...document.querySelectorAll(selector)];
-
-    const elements = {
-      leaderboard: $("#leaderboard"),
-      groups: $("#groups"),
-      totalPicks: $("#totalPicks"),
-      teamsUsed: $("#teamsUsed"),
-      playersCount: $("#playersCount"),
-      lockBanner: $("#lockBanner"),
-      potAmount: $("#potAmount"),
-      potEntries: $("#potEntries"),
-      todayWidget: $("#todayWidget"),
-      todayDate: $("#todayDate"),
-      todayOurCount: $("#todayOurCount"),
-      todayMatches: $("#todayMatches"),
-      engStage: $("#engStage"),
-      adminPin: $("#adminPin"),
-      loginBtn: $("#loginBtn"),
-      adminLock: $("#adminLock"),
-      adminContent: $("#adminContent"),
-      teamsInput: $("#teamsInput"),
-      saveTeamsBtn: $("#saveTeamsBtn"),
-      loadDefaultBtn: $("#loadDefaultBtn"),
-      manualName: $("#manualName"),
-      manualTeam: $("#manualTeam"),
-      manualAddBtn: $("#manualAddBtn"),
-      clearEntriesBtn: $("#clearEntriesBtn"),
-      exportCsvBtn: $("#exportCsvBtn"),
-      adminEntries: $("#adminEntries"),
-      sortGroupBtn: $("#sortGroupBtn"),
-      sortCountBtn: $("#sortCountBtn"),
-      sortAliveBtn: $("#sortAliveBtn"),
-      toast: $("#toast")
-    };
-
-    function toast(message) {
-      elements.toast.textContent = message;
-      elements.toast.classList.add("show");
-      setTimeout(() => elements.toast.classList.remove("show"), 4500);
-    }
-
-    function withTimeout(promise, label = "Firebase request", ms = 9000) {
-      return Promise.race([
-        promise,
-        new Promise((_, reject) => {
-          setTimeout(() => reject(new Error(`${label} timed out. Check Realtime Database rules and internet connection.`)), ms);
-        })
-      ]);
-    }
-
-    // Display-name overrides — these rename a team on screen without touching
-    // Firebase or the alias/flag maps. Add more entries here as needed.
-    const DISPLAY_OVERRIDES = {
-      "Argentina": "VARgentina"
-    };
-    function displayTeam(name) {
-      return DISPLAY_OVERRIDES[name] || name;
-    }
-
-    function normalizeName(value) {
-      return String(value || "").trim().replace(/\s+/g, " ");
-    }
-
-    function escapeHtml(value) {
-      return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    function formatMoney(amount) {
-      return "£" + Number(amount).toLocaleString("en-GB");
-    }
-
-    function countByTeam() {
-      return entries.reduce((acc, entry) => {
-        acc[entry.team] = (acc[entry.team] || 0) + 1;
-        return acc;
-      }, {});
-    }
-
-    function renderStats() {
-      const used = new Set(entries.map(entry => entry.team));
-      const players = new Set(entries.map(entry => String(entry.name || "").toLowerCase()));
-      const stillIn = [...used].filter(isAlive).length;
-      elements.totalPicks.textContent = entries.length;
-      elements.teamsUsed.textContent = knockoutsStarted ? `${stillIn}/${used.size}` : used.size;
-      elements.playersCount.textContent = players.size;
-    }
-
-    function renderLockBanner() {
-      const banner = elements.lockBanner;
-      if (!banner) return;
-      banner.className = "lock-banner show locked";
-      banner.innerHTML = `<span class="lock-icon">🔒</span> <span>Entries are <b>closed</b> — the tournament has kicked off. Good luck everyone!</span>`;
-    }
-
-    function renderPot() {
-      const count = entries.length;
-      const total = count * ENTRY_PRICE;
-      elements.potAmount.textContent = formatMoney(total);
-      elements.potEntries.textContent = `${count} entr${count === 1 ? "y" : "ies"} · £${ENTRY_PRICE} each`;
-
-      // bump animation when the count goes up
-      if (count > lastEntriesCount) {
-        elements.potAmount.classList.remove("bump");
-        // force reflow so we can re-add the class
-        void elements.potAmount.offsetWidth;
-        elements.potAmount.classList.add("bump");
-      }
-      lastEntriesCount = count;
-    }
-
-    // Group entries by person (case-insensitive), preserving display casing of first occurrence
-    function groupEntriesByPerson() {
-      const map = new Map();
-      entries.forEach(entry => {
-        const key = entry.name.toLowerCase();
-        if (!map.has(key)) {
-          map.set(key, { displayName: entry.name, picks: [] });
-        }
-        map.get(key).picks.push(entry);
-      });
-      return [...map.values()].sort((a, b) => b.picks.length - a.picks.length || a.displayName.localeCompare(b.displayName));
-    }
-
-    function renderLeaderboard() {
-      if (!entries.length) {
-        elements.leaderboard.innerHTML = `<div class="entry-card"><div><div class="name">No picks on the board</div><div class="small">Entries are closed — an admin can add any missed entries from the Admin tab.</div></div></div>`;
-        return;
-      }
-
-      const people = groupEntriesByPerson();
-
-      elements.leaderboard.innerHTML = people.map(person => {
-        const unpaid = person.picks.filter(p => p.paid === false).length;
-        const owesHtml = unpaid > 0 ? `<div class="owes-badge">Owes £${unpaid * ENTRY_PRICE}</div>` : "";
-        const alive = person.picks.filter(p => isAlive(p.team)).length;
-        const aliveHtml = knockoutsStarted
-          ? `<div class="small" style="margin-top:6px;">${alive} of ${person.picks.length} still in</div>`
-          : "";
-        return `
-        <div class="entry-card person-card">
-          <div>
-            <div class="name">${escapeHtml(person.displayName)}</div>
-            <div class="teams-chips">
-              ${person.picks.map(p => `<span class="chip ${p.paid === false ? "unpaid" : ""} ${isAlive(p.team) ? "" : "out"}">${flagFor(p.team)}${escapeHtml(displayTeam(p.team))}</span>`).join("")}
-            </div>
-            ${aliveHtml}
-            ${owesHtml}
-          </div>
-          <div class="team-count">${person.picks.length} × £${ENTRY_PRICE}</div>
-        </div>
-      `;
-      }).join("");
-    }
-
-    function renderBrackets() {
-      const counts = countByTeam();
-      const sortedTeams = [...teams];
-
-      if (bracketMode === "count") {
-        sortedTeams.sort((a, b) => (counts[b.name] || 0) - (counts[a.name] || 0) || a.name.localeCompare(b.name));
-        elements.groups.innerHTML = `
-          <div class="group-card" style="grid-column:1/-1;">
-            <div class="group-title"><span>Most Picked</span><span>${entries.length} total</span></div>
-            ${sortedTeams.map(team => teamLine(team, counts[team.name] || 0)).join("")}
-          </div>
-        `;
-        return;
-      }
-
-      if (bracketMode === "alive") {
-        const survivors = sortedTeams.filter(team => isAlive(team.name))
-          .sort((a, b) => (counts[b.name] || 0) - (counts[a.name] || 0) || a.name.localeCompare(b.name));
-        const body = survivors.length
-          ? survivors.map(team => teamLine(team, counts[team.name] || 0)).join("")
-          : `<div class="team-line"><span class="small">Knockout draw not published yet — every team is still in.</span></div>`;
-        elements.groups.innerHTML = `
-          <div class="group-card" style="grid-column:1/-1;">
-            <div class="group-title"><span>Still In</span><span>${survivors.length} teams</span></div>
-            ${body}
-          </div>
-        `;
-        return;
-      }
-
-      const grouped = sortedTeams.reduce((acc, team) => {
-        acc[team.group] = acc[team.group] || [];
-        acc[team.group].push(team);
-        return acc;
-      }, {});
-
-      elements.groups.innerHTML = Object.entries(grouped).map(([group, groupTeams]) => `
-        <div class="group-card">
-          <div class="group-title"><span>${escapeHtml(group)}</span><span>${groupTeams.length}</span></div>
-          ${groupTeams.map(team => teamLine(team, counts[team.name] || 0)).join("")}
-        </div>
-      `).join("");
-    }
-
-    function teamLine(team, count) {
-      const out = !isAlive(team.name);
-      const badgeClass = out ? "out" : count > 1 ? "hot" : count === 0 ? "empty" : "";
-      return `
-        <div class="team-line ${out ? "eliminated" : ""}">
-          <span>${flagFor(team.name)}${escapeHtml(displayTeam(team.name))}</span>
-          <span class="badge ${badgeClass}">${out ? "OUT" : count}</span>
-        </div>
-      `;
-    }
-
-    function renderAdmin() {
-      if (!adminIsEditingTeams) {
-        elements.teamsInput.value = teams.map(team => `${team.group} | ${team.name}`).join("\n");
-      }
-
-      elements.manualTeam.innerHTML = teams.map(team => `<option value="${escapeHtml(team.name)}">${escapeHtml(team.group)} | ${escapeHtml(team.name)}</option>`).join("");
-
-      if (!entries.length) {
-        elements.adminEntries.innerHTML = `<div class="entry-card"><div><div class="name">No entries to manage</div><div class="small">Once picks are made, they will appear here.</div></div></div>`;
-        return;
-      }
-
-      elements.adminEntries.innerHTML = entries.map(entry => {
-        const isUnpaid = entry.paid === false;
-        return `
-        <div class="entry-card">
-          <div>
-            <div class="name">${escapeHtml(entry.name)}</div>
-            <div class="small">${escapeHtml(entry.group || "No group")} | ${escapeHtml(displayTeam(entry.team))}${isAlive(entry.team) ? "" : " · OUT"}</div>
-            <span class="paid-status ${isUnpaid ? "no" : "yes"}">${isUnpaid ? "Not paid" : "Paid"}</span>
-          </div>
-          <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-            <button class="${isUnpaid ? "success" : ""}" data-toggle-paid="${entry.id}" data-currently-unpaid="${isUnpaid ? "1" : "0"}">${isUnpaid ? "Mark paid" : "Mark not paid"}</button>
-            <button class="danger" data-delete-entry="${entry.id}">Delete</button>
-          </div>
-        </div>
-      `;
-      }).join("");
-
-      $$('[data-delete-entry]').forEach(button => {
-        button.addEventListener("click", async () => {
-          await withTimeout(remove(ref(db, `worldcup_entries/${button.dataset.deleteEntry}`)), "Deleting entry");
-          toast("Entry deleted.");
-        });
-      });
-
-      $$('[data-toggle-paid]').forEach(button => {
-        button.addEventListener("click", async () => {
-          const makePaid = button.dataset.currentlyUnpaid === "1";
-          try {
-            await withTimeout(
-              update(ref(db, `worldcup_entries/${button.dataset.togglePaid}`), { paid: makePaid }),
-              "Updating paid status"
-            );
-            toast(makePaid ? "Marked as paid." : "Marked as NOT paid — it'll show on the board.");
-          } catch (error) {
-            console.error(error);
-            toast(`Could not update: ${error.message}. Check database write rules are enabled.`);
-          }
-        });
-      });
-    }
-
-    function renderAll() {
-      renderStats();
-      renderPot();
-      renderLockBanner();
-      renderLeaderboard();
-      renderBrackets();
-      renderAdmin();
-      renderToday();
-      renderFixtures();
-      renderEngland();
-      renderWinners();
-    }
-
-    function snapshotToArray(snapshot) {
-      const data = snapshot.val() || {};
-      return Object.entries(data).map(([id, value]) => ({ id, ...value }));
-    }
-
-    async function seedDefaultTeamsIfEmpty() {
-      const snap = await withTimeout(get(teamsRef), "Loading teams");
-      if (snap.exists()) return;
-      const teamData = {};
-      DEFAULT_TEAMS.forEach(team => {
-        const id = team.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-        teamData[id] = { ...team, createdAt: serverTimestamp() };
-      });
-      await withTimeout(set(teamsRef, teamData), "Saving default teams");
-    }
-
-    function parseTeamsInput(value) {
-      return value.split("\n")
-        .map(line => line.trim())
-        .filter(Boolean)
-        .map(line => {
-          const parts = line.split("|").map(part => part.trim()).filter(Boolean);
-          if (parts.length >= 2) return { group: parts[0], name: parts.slice(1).join(" | ") };
-          return { group: "Ungrouped", name: parts[0] || line };
-        });
-    }
-
-    async function replaceTeams(newTeams) {
-      if (!adminUnlocked) return toast("Admin is locked.");
-      if (!newTeams.length) return toast("Add at least one team.");
-
-      elements.saveTeamsBtn.disabled = true;
-      elements.saveTeamsBtn.textContent = "Saving...";
-
-      try {
-        const teamData = {};
-        const usedIds = new Set();
-        newTeams.forEach(team => {
-          let cleanId = team.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-          if (!cleanId || usedIds.has(cleanId)) {
-            cleanId = (cleanId || "team") + "-" + Math.random().toString(36).slice(2, 7);
-          }
-          usedIds.add(cleanId);
-          teamData[cleanId] = { ...team, createdAt: serverTimestamp() };
-        });
-
-        await withTimeout(set(teamsRef, teamData), "Saving teams");
-        adminIsEditingTeams = false;
-        toast("Teams saved.");
-      } catch (error) {
-        console.error(error);
-        toast(`Teams did not save: ${error.message}`);
-      } finally {
-        elements.saveTeamsBtn.disabled = false;
-        elements.saveTeamsBtn.textContent = "Save Teams";
-      }
-    }
-
-    async function addManualEntry() {
-      if (!adminUnlocked) {
-        toast("Admin is locked.");
-        return;
-      }
-
-      const name = normalizeName(elements.manualName.value);
-      const selectedName = elements.manualTeam.value;
-      const selectedTeam = teams.find(team => team.name === selectedName);
-      if (!name || !selectedTeam) return toast("Add a name and select a team.");
-
-      try {
-        await withTimeout(push(entriesRef, {
-          name,
-          team: selectedTeam.name,
-          group: selectedTeam.group,
-          createdAt: serverTimestamp(),
-          manual: true,
-          paid: true
-        }), "Adding manual entry");
-
-        elements.manualName.value = "";
-        toast(`Manual entry added. +£${ENTRY_PRICE} to the pot.`);
-      } catch (error) {
-        console.error(error);
-        toast(`Could not add entry: ${error.message}`);
-      }
-    }
-
-    async function clearEntries() {
-      if (!adminUnlocked) {
-        toast("Admin is locked.");
-        return;
-      }
-
-      const ok = confirm("Clear all World Cup picks? This cannot be undone.");
-      if (!ok) return;
-      await withTimeout(remove(entriesRef), "Clearing picks");
-      lastEntriesCount = 0;
-      toast("All picks cleared.");
-    }
-
-    function exportCsv() {
-      if (!adminUnlocked) {
-        toast("Admin is locked.");
-        return;
-      }
-
-      const rows = [["Name", "Team", "Group", "Entry Fee (£)", "Status"]];
-      entries.forEach(entry => rows.push([
-        entry.name,
-        entry.team,
-        entry.group || "",
-        ENTRY_PRICE,
-        knockoutsStarted ? (isAlive(entry.team) ? "Still in" : "Out") : "Group stage"
-      ]));
-      rows.push([]);
-      rows.push(["TOTAL POT", "", "", entries.length * ENTRY_PRICE, ""]);
-      const csv = rows.map(row => row.map(cell => `"${String(cell ?? "").replaceAll('"', '""')}"`).join(",")).join("\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "gxo-world-cup-picks.csv";
-      link.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function switchTab(pageId) {
-      $$(".tab").forEach(item => item.classList.toggle("active", item.dataset.page === pageId));
-      $$(".page").forEach(page => page.classList.remove("active"));
-      $("#" + pageId).classList.add("active");
-      document.body.classList.toggle("england-focus", pageId === "englandPage");
-      document.body.classList.toggle("winners-focus", pageId === "winnersPage");
-      window.scrollTo({ top: 0 });
-      if (pageId === "winnersPage") requestAnimationFrame(scaleWinners);
-    }
-
-    $$(".tab").forEach(tab => {
-      tab.addEventListener("click", () => switchTab(tab.dataset.page));
-    });
-
-    document.getElementById("goFixturesBtn").addEventListener("click", () => switchTab("fixturesPage"));
-    document.getElementById("goBracketsBtn").addEventListener("click", () => switchTab("bracketPage"));
-    document.getElementById("engBackBtn").addEventListener("click", () => switchTab("pickerPage"));
-    document.getElementById("winBackBtn").addEventListener("click", () => switchTab("pickerPage"));
-
-    async function unlockAdmin() {
-      const entered = elements.adminPin.value.trim();
-      if (!entered) {
-        toast("Enter the PIN first.");
-        return;
-      }
-
-      // Hash what the user typed and compare to the stored hash.
-      // The plaintext PIN is never present in the source code or in memory.
-      try {
-        const enteredHash = await hashPin(entered);
-        if (enteredHash === ADMIN_PIN_HASH) {
-          adminUnlocked = true;
-          elements.adminPin.value = "";
-          elements.adminLock.style.display = "none";
-          elements.adminContent.style.display = "block";
-          toast("Admin unlocked.");
-        } else {
-          toast("Wrong PIN.");
-        }
-      } catch (err) {
-        console.error(err);
-        toast("Couldn't check PIN. Try again.");
-      }
-    }
-
-    elements.loginBtn.addEventListener("click", unlockAdmin);
-    elements.adminPin.addEventListener("keydown", event => {
-      if (event.key === "Enter") unlockAdmin();
-    });
-
-    elements.teamsInput.addEventListener("input", () => {
-      adminIsEditingTeams = true;
-    });
-
-    elements.saveTeamsBtn.addEventListener("click", async () => {
-      if (!adminUnlocked) return toast("Admin is locked.");
-      await replaceTeams(parseTeamsInput(elements.teamsInput.value));
-    });
-    elements.loadDefaultBtn.addEventListener("click", () => {
-      adminIsEditingTeams = true;
-      elements.teamsInput.value = DEFAULT_TEAMS.map(team => `${team.group} | ${team.name}`).join("\n");
-      toast("Default teams loaded into the editor. Press Save Teams to apply.");
-    });
-    elements.manualAddBtn.addEventListener("click", addManualEntry);
-    elements.clearEntriesBtn.addEventListener("click", clearEntries);
-    elements.exportCsvBtn.addEventListener("click", exportCsv);
-
-    function setBracketMode(mode) {
-      bracketMode = mode;
-      [elements.sortGroupBtn, elements.sortCountBtn, elements.sortAliveBtn].forEach(btn => btn.classList.remove("primary"));
-      ({ group: elements.sortGroupBtn, count: elements.sortCountBtn, alive: elements.sortAliveBtn })[mode].classList.add("primary");
-      renderBrackets();
-    }
-
-    elements.sortGroupBtn.addEventListener("click", () => setBracketMode("group"));
-    elements.sortCountBtn.addEventListener("click", () => setBracketMode("count"));
-    elements.sortAliveBtn.addEventListener("click", () => setBracketMode("alive"));
-
-    // === WORLD CUP 2026 GROUP-STAGE FIXTURES ===
-    // All times UK time (BST). From Sky Sports / Soccergraph (verified).
-    // Knockout rows below are fallbacks only — once ESPN publishes each draw,
-    // displayFixtures() swaps them for the real ties with real team names.
-    const FIXTURES = [
-      // ---------- GROUP STAGE ----------
-      // Thursday 11 June
-      { date: "2026-06-11", day: "Thu 11 Jun", time: "8:00pm", stage: "group", group: "A", home: "Mexico", away: "South Africa", venue: "Mexico City" },
-      // Friday 12 June
-      { date: "2026-06-12", day: "Fri 12 Jun", time: "3:00am", stage: "group", group: "A", home: "South Korea", away: "Czech Republic", venue: "Zapopan" },
-      { date: "2026-06-12", day: "Fri 12 Jun", time: "8:00pm", stage: "group", group: "B", home: "Canada", away: "Bosnia & Herzegovina", venue: "Toronto" },
-      // Saturday 13 June
-      { date: "2026-06-13", day: "Sat 13 Jun", time: "2:00am", stage: "group", group: "D", home: "USA", away: "Paraguay", venue: "Los Angeles" },
-      { date: "2026-06-13", day: "Sat 13 Jun", time: "8:00pm", stage: "group", group: "B", home: "Qatar", away: "Switzerland", venue: "Santa Clara" },
-      { date: "2026-06-13", day: "Sat 13 Jun", time: "11:00pm", stage: "group", group: "C", home: "Brazil", away: "Morocco", venue: "New Jersey" },
-      // Sunday 14 June
-      { date: "2026-06-14", day: "Sun 14 Jun", time: "2:00am", stage: "group", group: "C", home: "Haiti", away: "Scotland", venue: "Foxborough" },
-      { date: "2026-06-14", day: "Sun 14 Jun", time: "5:00am", stage: "group", group: "D", home: "Australia", away: "Turkey", venue: "Vancouver" },
-      { date: "2026-06-14", day: "Sun 14 Jun", time: "6:00pm", stage: "group", group: "E", home: "Germany", away: "Curacao", venue: "Houston" },
-      { date: "2026-06-14", day: "Sun 14 Jun", time: "9:00pm", stage: "group", group: "F", home: "Netherlands", away: "Japan", venue: "Arlington" },
-      // Monday 15 June
-      { date: "2026-06-15", day: "Mon 15 Jun", time: "12:00am", stage: "group", group: "E", home: "Ivory Coast", away: "Ecuador", venue: "Philadelphia" },
-      { date: "2026-06-15", day: "Mon 15 Jun", time: "3:00am", stage: "group", group: "F", home: "Sweden", away: "Tunisia", venue: "Guadalupe" },
-      { date: "2026-06-15", day: "Mon 15 Jun", time: "5:00pm", stage: "group", group: "H", home: "Spain", away: "Cape Verde", venue: "Atlanta" },
-      { date: "2026-06-15", day: "Mon 15 Jun", time: "8:00pm", stage: "group", group: "G", home: "Belgium", away: "Egypt", venue: "Seattle" },
-      { date: "2026-06-15", day: "Mon 15 Jun", time: "11:00pm", stage: "group", group: "H", home: "Saudi Arabia", away: "Uruguay", venue: "Miami" },
-      // Tuesday 16 June
-      { date: "2026-06-16", day: "Tue 16 Jun", time: "2:00am", stage: "group", group: "G", home: "Iran", away: "New Zealand", venue: "Los Angeles" },
-      { date: "2026-06-16", day: "Tue 16 Jun", time: "8:00pm", stage: "group", group: "I", home: "France", away: "Senegal", venue: "New Jersey" },
-      { date: "2026-06-16", day: "Tue 16 Jun", time: "11:00pm", stage: "group", group: "I", home: "Iraq", away: "Norway", venue: "Foxborough" },
-      // Wednesday 17 June
-      { date: "2026-06-17", day: "Wed 17 Jun", time: "2:00am", stage: "group", group: "J", home: "VARgentina", away: "Algeria", venue: "Kansas City" },
-      { date: "2026-06-17", day: "Wed 17 Jun", time: "5:00am", stage: "group", group: "J", home: "Austria", away: "Jordan", venue: "Santa Clara" },
-      { date: "2026-06-17", day: "Wed 17 Jun", time: "6:00pm", stage: "group", group: "K", home: "Portugal", away: "Congo DR", venue: "Houston" },
-      { date: "2026-06-17", day: "Wed 17 Jun", time: "9:00pm", stage: "group", group: "L", home: "England", away: "Croatia", venue: "Arlington" },
-      // Thursday 18 June
-      { date: "2026-06-18", day: "Thu 18 Jun", time: "12:00am", stage: "group", group: "L", home: "Ghana", away: "Panama", venue: "Toronto" },
-      { date: "2026-06-18", day: "Thu 18 Jun", time: "3:00am", stage: "group", group: "K", home: "Uzbekistan", away: "Colombia", venue: "Mexico City" },
-      { date: "2026-06-18", day: "Thu 18 Jun", time: "5:00pm", stage: "group", group: "A", home: "Czech Republic", away: "South Africa", venue: "Atlanta" },
-      { date: "2026-06-18", day: "Thu 18 Jun", time: "8:00pm", stage: "group", group: "B", home: "Switzerland", away: "Bosnia & Herzegovina", venue: "Los Angeles" },
-      { date: "2026-06-18", day: "Thu 18 Jun", time: "11:00pm", stage: "group", group: "B", home: "Canada", away: "Qatar", venue: "Vancouver" },
-      // Friday 19 June
-      { date: "2026-06-19", day: "Fri 19 Jun", time: "2:00am", stage: "group", group: "A", home: "Mexico", away: "South Korea", venue: "Zapopan" },
-      { date: "2026-06-19", day: "Fri 19 Jun", time: "8:00pm", stage: "group", group: "D", home: "USA", away: "Australia", venue: "Seattle" },
-      { date: "2026-06-19", day: "Fri 19 Jun", time: "11:00pm", stage: "group", group: "C", home: "Scotland", away: "Morocco", venue: "Foxborough" },
-      // Saturday 20 June
-      { date: "2026-06-20", day: "Sat 20 Jun", time: "2:00am", stage: "group", group: "C", home: "Brazil", away: "Haiti", venue: "Philadelphia" },
-      { date: "2026-06-20", day: "Sat 20 Jun", time: "5:00am", stage: "group", group: "D", home: "Turkey", away: "Paraguay", venue: "Santa Clara" },
-      { date: "2026-06-20", day: "Sat 20 Jun", time: "6:00pm", stage: "group", group: "F", home: "Netherlands", away: "Sweden", venue: "Houston" },
-      { date: "2026-06-20", day: "Sat 20 Jun", time: "9:00pm", stage: "group", group: "E", home: "Germany", away: "Ivory Coast", venue: "Toronto" },
-      // Sunday 21 June
-      { date: "2026-06-21", day: "Sun 21 Jun", time: "1:00am", stage: "group", group: "E", home: "Ecuador", away: "Curacao", venue: "Kansas City" },
-      { date: "2026-06-21", day: "Sun 21 Jun", time: "5:00am", stage: "group", group: "F", home: "Tunisia", away: "Japan", venue: "Guadalupe" },
-      { date: "2026-06-21", day: "Sun 21 Jun", time: "5:00pm", stage: "group", group: "H", home: "Spain", away: "Saudi Arabia", venue: "Atlanta" },
-      { date: "2026-06-21", day: "Sun 21 Jun", time: "8:00pm", stage: "group", group: "G", home: "Belgium", away: "Iran", venue: "Los Angeles" },
-      { date: "2026-06-21", day: "Sun 21 Jun", time: "11:00pm", stage: "group", group: "H", home: "Uruguay", away: "Cape Verde", venue: "Miami" },
-      // Monday 22 June
-      { date: "2026-06-22", day: "Mon 22 Jun", time: "2:00am", stage: "group", group: "G", home: "New Zealand", away: "Egypt", venue: "Vancouver" },
-      { date: "2026-06-22", day: "Mon 22 Jun", time: "6:00pm", stage: "group", group: "J", home: "VARgentina", away: "Austria", venue: "Arlington" },
-      { date: "2026-06-22", day: "Mon 22 Jun", time: "10:00pm", stage: "group", group: "I", home: "France", away: "Iraq", venue: "Philadelphia" },
-      // Tuesday 23 June
-      { date: "2026-06-23", day: "Tue 23 Jun", time: "1:00am", stage: "group", group: "I", home: "Norway", away: "Senegal", venue: "Toronto" },
-      { date: "2026-06-23", day: "Tue 23 Jun", time: "4:00am", stage: "group", group: "J", home: "Jordan", away: "Algeria", venue: "Santa Clara" },
-      { date: "2026-06-23", day: "Tue 23 Jun", time: "6:00pm", stage: "group", group: "K", home: "Portugal", away: "Uzbekistan", venue: "Houston" },
-      { date: "2026-06-23", day: "Tue 23 Jun", time: "9:00pm", stage: "group", group: "L", home: "England", away: "Ghana", venue: "Foxborough" },
-      // Wednesday 24 June
-      { date: "2026-06-24", day: "Wed 24 Jun", time: "12:00am", stage: "group", group: "L", home: "Panama", away: "Croatia", venue: "Toronto" },
-      { date: "2026-06-24", day: "Wed 24 Jun", time: "3:00am", stage: "group", group: "K", home: "Colombia", away: "Congo DR", venue: "Zapopan" },
-      { date: "2026-06-24", day: "Wed 24 Jun", time: "8:00pm", stage: "group", group: "B", home: "Switzerland", away: "Canada", venue: "Vancouver" },
-      { date: "2026-06-24", day: "Wed 24 Jun", time: "8:00pm", stage: "group", group: "B", home: "Bosnia & Herzegovina", away: "Qatar", venue: "Seattle" },
-      { date: "2026-06-24", day: "Wed 24 Jun", time: "11:00pm", stage: "group", group: "C", home: "Morocco", away: "Haiti", venue: "Atlanta" },
-      { date: "2026-06-24", day: "Wed 24 Jun", time: "11:00pm", stage: "group", group: "C", home: "Scotland", away: "Brazil", venue: "Miami" },
-      // Thursday 25 June
-      { date: "2026-06-25", day: "Thu 25 Jun", time: "2:00am", stage: "group", group: "A", home: "South Africa", away: "South Korea", venue: "Guadalupe" },
-      { date: "2026-06-25", day: "Thu 25 Jun", time: "2:00am", stage: "group", group: "A", home: "Czech Republic", away: "Mexico", venue: "Mexico City" },
-      { date: "2026-06-25", day: "Thu 25 Jun", time: "9:00pm", stage: "group", group: "E", home: "Curacao", away: "Ivory Coast", venue: "Philadelphia" },
-      { date: "2026-06-25", day: "Thu 25 Jun", time: "9:00pm", stage: "group", group: "E", home: "Ecuador", away: "Germany", venue: "New Jersey" },
-      // Friday 26 June
-      { date: "2026-06-26", day: "Fri 26 Jun", time: "12:00am", stage: "group", group: "F", home: "Tunisia", away: "Netherlands", venue: "Kansas City" },
-      { date: "2026-06-26", day: "Fri 26 Jun", time: "12:00am", stage: "group", group: "F", home: "Japan", away: "Sweden", venue: "Arlington" },
-      { date: "2026-06-26", day: "Fri 26 Jun", time: "3:00am", stage: "group", group: "D", home: "Turkey", away: "USA", venue: "Los Angeles" },
-      { date: "2026-06-26", day: "Fri 26 Jun", time: "3:00am", stage: "group", group: "D", home: "Paraguay", away: "Australia", venue: "Santa Clara" },
-      { date: "2026-06-26", day: "Fri 26 Jun", time: "8:00pm", stage: "group", group: "I", home: "Norway", away: "France", venue: "Foxborough" },
-      { date: "2026-06-26", day: "Fri 26 Jun", time: "8:00pm", stage: "group", group: "I", home: "Senegal", away: "Iraq", venue: "Toronto" },
-      // Saturday 27 June
-      { date: "2026-06-27", day: "Sat 27 Jun", time: "1:00am", stage: "group", group: "H", home: "Cape Verde", away: "Saudi Arabia", venue: "Houston" },
-      { date: "2026-06-27", day: "Sat 27 Jun", time: "1:00am", stage: "group", group: "H", home: "Uruguay", away: "Spain", venue: "Zapopan" },
-      { date: "2026-06-27", day: "Sat 27 Jun", time: "4:00am", stage: "group", group: "G", home: "New Zealand", away: "Belgium", venue: "Vancouver" },
-      { date: "2026-06-27", day: "Sat 27 Jun", time: "4:00am", stage: "group", group: "G", home: "Egypt", away: "Iran", venue: "Seattle" },
-      { date: "2026-06-27", day: "Sat 27 Jun", time: "10:00pm", stage: "group", group: "L", home: "Panama", away: "England", venue: "New Jersey" },
-      { date: "2026-06-27", day: "Sat 27 Jun", time: "10:00pm", stage: "group", group: "L", home: "Croatia", away: "Ghana", venue: "Philadelphia" },
-      // Sunday 28 June (early hours UK) — final Group J & K matches
-      { date: "2026-06-28", day: "Sun 28 Jun", time: "12:30am", stage: "group", group: "K", home: "Colombia", away: "Portugal", venue: "Miami" },
-      { date: "2026-06-28", day: "Sun 28 Jun", time: "12:30am", stage: "group", group: "K", home: "Congo DR", away: "Uzbekistan", venue: "Atlanta" },
-      { date: "2026-06-28", day: "Sun 28 Jun", time: "3:00am", stage: "group", group: "J", home: "Algeria", away: "Austria", venue: "Kansas City" },
-      { date: "2026-06-28", day: "Sun 28 Jun", time: "3:00am", stage: "group", group: "J", home: "Jordan", away: "VARgentina", venue: "Arlington" },
-
-      // ---------- KNOCKOUT FALLBACKS (replaced by live ESPN data when available) ----------
-      { date: "2026-06-28", day: "Sun 28 Jun", time: "TBC", stage: "r32", home: "Round of 32", away: "Match 73 – Match 80", venue: "Various" },
-      { date: "2026-06-29", day: "Mon 29 Jun", time: "TBC", stage: "r32", home: "Round of 32", away: "Match 81 – Match 84", venue: "Various" },
-      { date: "2026-06-30", day: "Tue 30 Jun", time: "TBC", stage: "r32", home: "Round of 32", away: "Match 85 – Match 88", venue: "Various" },
-      { date: "2026-07-01", day: "Wed 1 Jul", time: "TBC", stage: "r32", home: "Round of 32", away: "Match 89 – Match 92", venue: "Various" },
-      { date: "2026-07-02", day: "Thu 2 Jul", time: "TBC", stage: "r32", home: "Round of 32", away: "Match 93 – Match 96", venue: "Various" },
-      { date: "2026-07-03", day: "Fri 3 Jul", time: "TBC", stage: "r32", home: "Round of 32", away: "Final R32 matches", venue: "Various" },
-      { date: "2026-07-04", day: "Sat 4 Jul", time: "TBC", stage: "r16", home: "Round of 16", away: "4 matches", venue: "Various" },
-      { date: "2026-07-05", day: "Sun 5 Jul", time: "TBC", stage: "r16", home: "Round of 16", away: "4 matches", venue: "Various" },
-      { date: "2026-07-06", day: "Mon 6 Jul", time: "TBC", stage: "r16", home: "Round of 16", away: "4 matches", venue: "Various" },
-      { date: "2026-07-07", day: "Tue 7 Jul", time: "TBC", stage: "r16", home: "Round of 16", away: "4 matches", venue: "Various" },
-      { date: "2026-07-09", day: "Thu 9 Jul", time: "9:00pm", stage: "qf", home: "Quarter-final", away: "Match 97", venue: "Foxborough" },
-      { date: "2026-07-10", day: "Fri 10 Jul", time: "8:00pm", stage: "qf", home: "Quarter-final", away: "Match 98", venue: "Los Angeles" },
-      { date: "2026-07-10", day: "Fri 10 Jul", time: "10:00pm", stage: "qf", home: "Quarter-final", away: "Match 99", venue: "Miami" },
-      { date: "2026-07-11", day: "Sat 11 Jul", time: "2:00am", stage: "qf", home: "Quarter-final", away: "Match 100", venue: "Kansas City" },
-      { date: "2026-07-14", day: "Tue 14 Jul", time: "8:00pm", stage: "sf", home: "Semi-final", away: "Match 101", venue: "Arlington" },
-      { date: "2026-07-15", day: "Wed 15 Jul", time: "8:00pm", stage: "sf", home: "Semi-final", away: "Match 102", venue: "Atlanta" },
-      { date: "2026-07-18", day: "Sat 18 Jul", time: "10:00pm", stage: "sf", home: "Third Place Play-off", away: "SF losers", venue: "Miami" },
-      { date: "2026-07-19", day: "Sun 19 Jul", time: "8:00pm", stage: "final", home: "FINAL", away: "SF1 winner vs SF2 winner", venue: "MetLife Stadium, New Jersey" }
-    ];
-
-    // Map fixture-list display names onto the names used in the picker
-    const FIXTURE_TEAM_ALIASES = {
-      "Argentina": "VARgentina",
-      "VARgentina": "VARgentina",
-      "Czech Republic": "Czechia",
-      "Czechia": "Czechia",
-      "Turkey": "Türkiye",
-      "Türkiye": "Türkiye",
-      "South Korea": "Korea Republic",
-      "Korea Republic": "Korea Republic",
-      "Iran": "IR Iran",
-      "IR Iran": "IR Iran",
-      "Cape Verde": "Cabo Verde",
-      "Cabo Verde": "Cabo Verde",
-      "Congo DR": "Congo DR",
-      "DR Congo": "Congo DR",
-      "Curacao": "Curaçao",
-      "Curaçao": "Curaçao",
-      "Ivory Coast": "Côte d'Ivoire",
-      "Côte d'Ivoire": "Côte d'Ivoire",
-      "Bosnia & Herzegovina": "Bosnia and Herzegovina",
-      "Bosnia and Herzegovina": "Bosnia and Herzegovina"
-    };
-
-    function normaliseTeam(name) {
-      return FIXTURE_TEAM_ALIASES[name] || name;
-    }
-
-    // =====================================================================
-    // LIVE DATA — ESPN public scoreboard (free, no API key)
-    // Gives us: live/full-time scores, the real knockout ties once each draw
-    // is published, and therefore who is still in the tournament.
-    // =====================================================================
-
-    const ESPN_NAME_ALIASES = {
-      "United States": "USA",
-      "Argentina": "VARgentina",
-      "Democratic Republic of the Congo": "Congo DR",
-      "South Korea": "Korea Republic",
-      "Czech Republic": "Czechia",
-      "Cape Verde": "Cabo Verde",
-      "Ivory Coast": "Côte d'Ivoire",
-      "Curacao": "Curaçao",
-      "Turkiye": "Türkiye",
-      "Iran": "IR Iran",
-      "Bosnia & Herzegovina": "Bosnia and Herzegovina"
-    };
-
-    function canonTeam(name) {
-      const mapped = ESPN_NAME_ALIASES[name] || name;
-      return normaliseTeam(mapped).toLowerCase().trim();
-    }
-
-    const ESPN_URL = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
-
-    let liveScores = {};        // "home|away" (canonical) -> score object
-    let knockoutFixtures = [];  // real knockout ties, straight from ESPN
-    let aliveTeams = new Set(); // canonical names still in the tournament
-    let knockoutsStarted = false;
-
-    const pad = n => String(n).padStart(2, "0");
-    const UK_TZ = "Europe/London";
-    // Everything is shown in UK time, on every device, regardless of the
-    // viewer's own timezone — this is a UK sweepstake.
-    const localKey  = iso => new Date(iso).toLocaleDateString("en-CA", { timeZone: UK_TZ }); // YYYY-MM-DD
-    const localDay  = iso => new Date(iso).toLocaleDateString("en-GB", { timeZone: UK_TZ, weekday: "short", day: "numeric", month: "short" });
-    const localTime = iso => new Date(iso).toLocaleTimeString("en-GB", { timeZone: UK_TZ, hour: "numeric", minute: "2-digit", hour12: true }).replace(/\s/g, "").toLowerCase();
-    // "Today" and "yesterday" in UK terms, so every device buckets matches the same way.
-    const ukDateKey = (d = new Date()) => d.toLocaleDateString("en-CA", { timeZone: UK_TZ });
-
-    // Order matters here: "Quarterfinal" also contains the word "final".
-    function stageFromNote(note) {
-      const n = (note || "").toLowerCase();
-      if (n.includes("group")) return "group";
-      if (n.includes("32")) return "r32";
-      if (n.includes("16")) return "r16";
-      if (n.includes("quarter")) return "qf";
-      if (n.includes("semi")) return "sf";
-      if (n.includes("third") || n.includes("3rd")) return "sf";
-      if (n.includes("final")) return "final";
-      return "r32";
-    }
-
-    function parseEspnEvent(ev) {
-      const comp = ev.competitions && ev.competitions[0];
-      if (!comp || !comp.competitors) return null;
-      const home = comp.competitors.find(c => c.homeAway === "home");
-      const away = comp.competitors.find(c => c.homeAway === "away");
-      if (!home || !away) return null;
-      const note = (comp.notes && comp.notes[0] && comp.notes[0].headline) || "";
-      const status = comp.status || ev.status || {};
-      return {
-        kickoff: ev.date,
-        note,
-        stage: stageFromNote(note),
-        home: home.team.displayName,
-        away: away.team.displayName,
-        hs: home.score,
-        as: away.score,
-        homePens: home.shootoutScore,
-        awayPens: away.shootoutScore,
-        venue: (comp.venue && comp.venue.fullName) || "TBC",
-        state: (status.type && status.type.state) || "pre",
-        detail: status.displayClock || (status.type && status.type.shortDetail) || ""
-      };
-    }
-
-    async function espnEvents(range) {
-      const res = await fetch(`${ESPN_URL}?dates=${range}&limit=100`);
-      if (!res.ok) throw new Error(`ESPN ${res.status}`);
-      const data = await res.json();
-      return (data.events || []).map(parseEspnEvent).filter(Boolean);
-    }
-
-    function indexScores(events) {
-      events.forEach(e => {
-        liveScores[`${canonTeam(e.home)}|${canonTeam(e.away)}`] = {
-          hs: e.hs, as: e.as, state: e.state, detail: e.detail,
-          homePens: e.homePens, awayPens: e.awayPens
-        };
-      });
-    }
-
-    // A team is still in if it appears in a knockout tie and hasn't lost one.
-    // Anyone who never appears went out in the group stage.
-    function computeSurvivors() {
-      if (!knockoutFixtures.length) { knockoutsStarted = false; return; }
-      knockoutsStarted = true;
-
-      const alive = new Set();
-      const out = new Set();
-
-      knockoutFixtures.forEach(e => {
-        // Skip the third-place play-off, or it would resurrect both semi-final losers.
-        if (!/third|3rd/i.test(e.note)) {
-          alive.add(canonTeam(e.home));
-          alive.add(canonTeam(e.away));
-        }
-        if (e.state !== "post") return;
-
-        const hs = Number(e.hs), as = Number(e.as);
-        let loser = null;
-        if (hs !== as) {
-          loser = hs > as ? e.away : e.home;
-        } else if (e.homePens != null && e.awayPens != null && Number(e.homePens) !== Number(e.awayPens)) {
-          loser = Number(e.homePens) > Number(e.awayPens) ? e.away : e.home;
-        }
-        if (loser) out.add(canonTeam(loser));
-      });
-
-      out.forEach(t => alive.delete(t)); // runs last, so a beaten team stays beaten
-      aliveTeams = alive;
-    }
-
-    function isAlive(teamName) {
-      return !knockoutsStarted || aliveTeams.has(canonTeam(teamName));
-    }
-
-    async function fetchLiveScores() {
-      try {
-        // Two calls: ESPN caps each response, and 104 matches won't fit in one.
-        const [groupEvents, koEvents] = await Promise.all([
-          espnEvents("20260611-20260628").catch(() => []),
-          espnEvents("20260628-20260720").catch(() => [])
-        ]);
-
-        if (!groupEvents.length && !koEvents.length) return;
-
-        liveScores = {};
-        indexScores(groupEvents);
-        indexScores(koEvents);
-
-        knockoutFixtures = koEvents
-          .filter(e => e.stage !== "group")
-          .sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff));
-
-        computeSurvivors();
-        renderAll();
-      } catch (e) {
-        // Scores are a bonus — fail quietly and the page still works.
-        console.warn("Live data unavailable:", e);
-      }
-    }
-
-    function scoreFor(homeName, awayName) {
-      const h = canonTeam(homeName), a = canonTeam(awayName);
-      const direct = liveScores[`${h}|${a}`];
-      if (direct) return direct;
-      const rev = liveScores[`${a}|${h}`];
-      if (rev) return { ...rev, hs: rev.as, as: rev.hs, homePens: rev.awayPens, awayPens: rev.homePens };
-      return null;
-    }
-
-    // The bit between two team names: "vs", a live score, or a full-time score.
-    function scoreChip(score) {
-      if (!score || score.state === "pre") return `<span class="small">vs</span>`;
-      if (score.state === "in") {
-        return `<span class="match-score live">${escapeHtml(score.hs)} – ${escapeHtml(score.as)}</span>`;
-      }
-      const pens = (score.homePens != null && score.awayPens != null && Number(score.hs) === Number(score.as))
-        ? ` <span class="small">(${escapeHtml(score.homePens)}–${escapeHtml(score.awayPens)} pens)</span>`
-        : "";
-      return `<span class="match-score ft">${escapeHtml(score.hs)} – ${escapeHtml(score.as)}</span>${pens}`;
-    }
-
-    // Curated group fixtures + real knockout ties from ESPN.
-    // Falls back to the hardcoded placeholders if ESPN is unreachable.
-    function displayFixtures() {
-      if (!knockoutFixtures.length) return FIXTURES;
-      const groupFx = FIXTURES.filter(f => f.stage === "group");
-      const koFx = knockoutFixtures.map(e => ({
-        date: localKey(e.kickoff),
-        day: localDay(e.kickoff),
-        time: localTime(e.kickoff),
-        kickoffISO: e.kickoff,
-        stage: e.stage,
-        home: e.home,
-        away: e.away,
-        venue: e.venue
-      }));
-      // Array.sort is stable, so each block keeps its internal order.
-      return [...groupFx, ...koFx].sort((a, b) => a.date.localeCompare(b.date));
-    }
-
-    const STAGE_LABELS = {
-      group: "GROUP",
-      r32: "R32",
-      r16: "R16",
-      qf: "QF",
-      sf: "SF",
-      final: "FINAL"
-    };
-
-    let fixtureFilter = "all"; // all | picked | group | knockout
-
-    function matchRow(match, pickersByTeam, pickedTeams) {
-      const homeN = normaliseTeam(match.home);
-      const awayN = normaliseTeam(match.away);
-      const homePicked = pickedTeams.has(homeN);
-      const awayPicked = pickedTeams.has(awayN);
-      const hasPick = homePicked || awayPicked;
-
-      const homeHtml = homePicked
-        ? `<span class="picked">${flagFor(match.home)}${escapeHtml(displayTeam(match.home))}</span>`
-        : `${flagFor(match.home)}${escapeHtml(displayTeam(match.home))}`;
-      const awayHtml = awayPicked
-        ? `<span class="picked">${flagFor(match.away)}${escapeHtml(displayTeam(match.away))}</span>`
-        : `${flagFor(match.away)}${escapeHtml(displayTeam(match.away))}`;
-
-      const score = scoreFor(match.home, match.away);
-
-      let statusLine = "";
-      if (score && score.state === "in") {
-        statusLine = `<div class="today-pickers"><span class="live-tag">Live</span> ${escapeHtml(score.detail)}</div>`;
-      } else if (score && score.state === "post") {
-        statusLine = `<div class="today-pickers">Full time</div>`;
-      }
-
-      let pickersLine = "";
-      if (hasPick) {
-        const names = [];
-        if (homePicked) names.push(...pickersByTeam[homeN].map(n => `<b>${escapeHtml(n)}</b> (${escapeHtml(displayTeam(match.home))})`));
-        if (awayPicked) names.push(...pickersByTeam[awayN].map(n => `<b>${escapeHtml(n)}</b> (${escapeHtml(displayTeam(match.away))})`));
-        pickersLine = `<div class="today-pickers">${names.join(" · ")}</div>`;
-      }
-
-      const tag = match.stage === "group" && match.group ? `Group ${match.group}` : STAGE_LABELS[match.stage];
-
-      return {
-        hasPick,
-        html: `
-          <div class="today-match ${hasPick ? "has-pick" : ""}">
-            <div class="today-match-time">${escapeHtml(match.time)}</div>
-            <div>
-              <div class="today-match-teams">${homeHtml} ${scoreChip(score)} ${awayHtml}</div>
-              ${statusLine}
-              ${pickersLine}
-            </div>
-            <div class="today-match-meta">${escapeHtml(tag)} · ${escapeHtml(match.venue)}</div>
-          </div>
-        `
-      };
-    }
-
-    function renderToday() {
-      const widget = elements.todayWidget;
-      if (!widget) return;
-
-      const now = new Date();
-      const todayKey = ukDateKey(now);
-      const yKey = ukDateKey(new Date(now.getTime() - 86400000));
-
-      const fixtures = displayFixtures();
-      const todays = fixtures.filter(f => f.date === todayKey);
-
-      // Hide the widget entirely outside the tournament window
-      if (!todays.length) {
-        widget.style.display = "none";
-        return;
-      }
-
-      widget.style.display = "block";
-      elements.todayDate.textContent = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-
-      // Map team -> array of pickers (case-preserving display names)
-      const pickersByTeam = {};
-      entries.forEach(entry => {
-        const norm = normaliseTeam(entry.team);
-        if (!pickersByTeam[norm]) pickersByTeam[norm] = [];
-        pickersByTeam[norm].push(entry.name);
-      });
-      const pickedTeams = new Set(Object.keys(pickersByTeam));
-
-      let ourCount = 0;
-      const todayHtml = todays.map(match => {
-        const row = matchRow(match, pickersByTeam, pickedTeams);
-        if (row.hasPick) ourCount += 1;
-        return row.html;
-      }).join("");
-
-      // Yesterday's results, once scores have loaded
-      const yesterdayRows = fixtures
-        .filter(f => f.date === yKey)
-        .map(f => ({ f, s: scoreFor(f.home, f.away) }))
-        .filter(x => x.s && (x.s.state === "post" || x.s.state === "in"))
-        .map(({ f }) => matchRow(f, pickersByTeam, pickedTeams).html);
-
-      const heading = text => `<div class="small" style="margin:0 0 2px; text-transform:uppercase; letter-spacing:1.2px; font-weight:900;">${text}</div>`;
-
-      elements.todayMatches.innerHTML = yesterdayRows.length
-        ? heading("Yesterday's results") + yesterdayRows.join("") + `<div style="height:8px;"></div>` + heading("Today") + todayHtml
-        : todayHtml;
-
-      if (ourCount > 0) {
-        elements.todayOurCount.textContent = `${ourCount} of ours playing`;
-        elements.todayOurCount.classList.remove("zero");
-      } else {
-        elements.todayOurCount.textContent = "None of our teams";
-        elements.todayOurCount.classList.add("zero");
-      }
-    }
-
-    // ===== ENGLAND PAGE =====
-    const ENGLAND = "england"; // canonical
-    let engCountdownTarget = null; // ms timestamp of the next England kickoff, or null
-
-    function englandFixtures() {
-      return displayFixtures().filter(f =>
-        canonTeam(f.home) === ENGLAND || canonTeam(f.away) === ENGLAND
-      );
-    }
-
-    // Real kickoff timestamp (an absolute instant) for the countdown + sorting.
-    // Identical on every device regardless of the viewer's timezone.
-    function fixtureKickoff(f) {
-      // Knockout ties from ESPN carry a real UTC timestamp — use it directly.
-      if (f.kickoffISO) {
-        const t = new Date(f.kickoffISO).getTime();
-        return isNaN(t) ? null : t;
-      }
-      // Group rows give a UK-time string like "8:00pm". During the tournament
-      // (June–July) the UK is on BST = UTC+1, so pin it to +01:00 explicitly.
-      const m = /^(\d{1,2}):(\d{2})(am|pm)$/i.exec((f.time || "").trim());
-      if (!m) return null;
-      let h = Number(m[1]) % 12;
-      if (/pm/i.test(m[3])) h += 12;
-      const t = new Date(`${f.date}T${pad(h)}:${m[2]}:00+01:00`).getTime();
-      return isNaN(t) ? null : t;
-    }
-
-    // Pick the one match to feature: a live England game wins; then today's;
-    // then the next upcoming; otherwise their most recent result.
-    function pickEnglandMatch(fixtures) {
-      const now = Date.now();
-      const todayKey = ukDateKey();
-
-      const withScore = fixtures.map(f => ({ f, s: scoreFor(f.home, f.away), ko: fixtureKickoff(f) }));
-
-      const live = withScore.find(x => x.s && x.s.state === "in");
-      if (live) return { ...live, mode: "live" };
-
-      const today = withScore.find(x => x.f.date === todayKey);
-      if (today) {
-        if (today.s && today.s.state === "post") return { ...today, mode: "ft" };
-        return { ...today, mode: "upcoming" };
-      }
-
-      const upcoming = withScore
-        .filter(x => x.ko && x.ko > now)
-        .sort((a, b) => a.ko - b.ko)[0];
-      if (upcoming) return { ...upcoming, mode: "upcoming" };
-
-      const past = withScore
-        .filter(x => x.s && x.s.state === "post")
-        .sort((a, b) => (b.ko || 0) - (a.ko || 0))[0];
-      if (past) return { ...past, mode: "ft" };
-
-      const anyPending = withScore.sort((a, b) => (a.ko || Infinity) - (b.ko || Infinity))[0];
-      return anyPending ? { ...anyPending, mode: "upcoming" } : null;
-    }
-
-    function engStageLabel(f) {
-      if (f.stage === "group") return `Group ${f.group || "Stage"}`;
-      return { r32: "Round of 32", r16: "Round of 16", qf: "Quarter-final", sf: "Semi-final", final: "Final" }[f.stage] || "Knockout";
-    }
-
-    function renderEngland() {
-      const host = elements.engStage;
-      if (!host) return;
-
-      const fixtures = englandFixtures();
-      if (!fixtures.length) {
-        engCountdownTarget = null;
-        host.innerHTML = `<div class="eng-empty">England aren't in the fixture list — check back once the schedule loads.</div>`;
-        return;
-      }
-
-      const picked = pickEnglandMatch(fixtures);
-      if (!picked) {
-        engCountdownTarget = null;
-        host.innerHTML = `<div class="eng-empty">Couldn't find an England match to show.</div>`;
-        return;
-      }
-
-      const { f, s, mode, ko } = picked;
-      const englandIsHome = canonTeam(f.home) === ENGLAND;
-      const opponentName = englandIsHome ? f.away : f.home;
-      const englandOut = !isAlive("England");
-
-      // Score for the centre panel
-      let scoreHtml, clockHtml, pensHtml = "";
-      if (s && (s.state === "in" || s.state === "post")) {
-        scoreHtml = `<div class="eng-score">${escapeHtml(s.hs)} – ${escapeHtml(s.as)}</div>`;
-        if (mode === "live") {
-          clockHtml = `<div class="eng-clock">${escapeHtml(s.detail || "Live")}</div>`;
-        } else {
-          clockHtml = `<div class="eng-clock grey">Full time</div>`;
-        }
-        if (s.homePens != null && s.awayPens != null && Number(s.hs) === Number(s.as)) {
-          pensHtml = `<div class="eng-pens">Penalties: ${escapeHtml(s.homePens)} – ${escapeHtml(s.awayPens)}</div>`;
-        }
-      } else {
-        scoreHtml = `<div class="eng-score pending">vs</div>`;
-        clockHtml = `<div class="eng-clock grey">Kick-off ${escapeHtml(f.time || "TBC")}</div>`;
-      }
-
-      // Status pill
-      let pillClass = "soon", pillText = "Upcoming";
-      if (mode === "live") { pillClass = "live"; pillText = "Live"; }
-      else if (mode === "ft") { pillClass = "ft"; pillText = "Full time"; }
-
-      // Countdown (only for upcoming with a known kickoff)
-      engCountdownTarget = (mode === "upcoming" && ko && ko > Date.now()) ? ko : null;
-      const countdownHtml = engCountdownTarget
-        ? `<div class="eng-countdown" id="engCountdown">${countdownCells(engCountdownTarget - Date.now())}</div>`
-        : "";
-
-      // England's full run of fixtures with results
-      const runHtml = fixtures.map(fx => {
-        const sc = scoreFor(fx.home, fx.away);
-        const isHome = canonTeam(fx.home) === ENGLAND;
-        const opp = isHome ? fx.away : fx.home;
-        let res = "";
-        if (sc && (sc.state === "post" || sc.state === "in")) {
-          const engGoals = isHome ? Number(sc.hs) : Number(sc.as);
-          const oppGoals = isHome ? Number(sc.as) : Number(sc.hs);
-          const cls = engGoals > oppGoals ? "win" : engGoals < oppGoals ? "loss" : "draw";
-          res = `<span class="fx-res ${cls}">${escapeHtml(engGoals)}–${escapeHtml(oppGoals)}</span>`;
-        } else {
-          res = `<span class="fx-res" style="color:var(--gxo-muted);">${escapeHtml(fx.time || "TBC")}</span>`;
-        }
-        return `
-          <div class="eng-fx">
-            <div class="fx-when">${escapeHtml(fx.day)}</div>
-            <div class="fx-opp">${flagFor(opp)}${escapeHtml(displayTeam(opp))} <span class="small">· ${engStageLabel(fx)}</span></div>
-            ${res}
-          </div>`;
-      }).join("");
-
-      const homeSideOut = englandIsHome ? englandOut : !isAlive(opponentName);
-      const awaySideOut = englandIsHome ? !isAlive(opponentName) : englandOut;
-
-      host.innerHTML = `
-        <div class="eng-inner">
-          <div class="eng-topline">
-            <div>
-              <div class="eng-kicker">England · ${escapeHtml(engStageLabel(f))}</div>
-              <div class="eng-stagetag">${escapeHtml(f.day)}</div>
-            </div>
-            <div class="eng-status-pill ${pillClass}">${escapeHtml(pillText)}</div>
-          </div>
-
-          <div class="eng-board">
-            <div class="eng-side ${homeSideOut ? "out" : ""}">
-              ${flagFor(f.home)}
-              <div class="eng-team-name ${canonTeam(f.home) === ENGLAND ? "is-eng" : ""}">${escapeHtml(displayTeam(f.home))}</div>
-            </div>
-            <div class="eng-centre">
-              ${scoreHtml}
-              ${clockHtml}
-              ${pensHtml}
-            </div>
-            <div class="eng-side ${awaySideOut ? "out" : ""}">
-              ${flagFor(f.away)}
-              <div class="eng-team-name ${canonTeam(f.away) === ENGLAND ? "is-eng" : ""}">${escapeHtml(displayTeam(f.away))}</div>
-            </div>
-          </div>
-
-          ${countdownHtml}
-
-          <div class="eng-meta-row">
-            <div>📍 <b>${escapeHtml(f.venue || "TBC")}</b></div>
-            <div>🕐 Kick-off <b>${escapeHtml(f.time || "TBC")}</b> UK</div>
-            ${englandOut ? `<div>❌ <b style="color:#ff6b6b;">Knocked out</b></div>` : `<div>✅ <b style="color:var(--gxo-green);">Still in</b></div>`}
-          </div>
-
-          <div class="eng-fixtures">
-            <h3>England's tournament</h3>
-            ${runHtml}
-          </div>
-        </div>
-      `;
-    }
-
-    function countdownCells(ms) {
-      const total = Math.max(0, Math.floor(ms / 1000));
-      const d = Math.floor(total / 86400);
-      const h = Math.floor((total % 86400) / 3600);
-      const m = Math.floor((total % 3600) / 60);
-      const sec = total % 60;
-      const cell = (num, label) => `<div class="eng-cd-cell"><div class="eng-cd-num">${pad(num)}</div><span class="eng-cd-label">${label}</span></div>`;
-      return (d > 0 ? cell(d, "Days") : "") + cell(h, "Hrs") + cell(m, "Min") + cell(sec, "Sec");
-    }
-
-    // Tick the countdown every second without re-rendering the whole page.
-    setInterval(() => {
-      const box = document.getElementById("engCountdown");
-      if (!box || !engCountdownTarget) return;
-      const remaining = engCountdownTarget - Date.now();
-      if (remaining <= 0) {
-        // Kickoff reached — pull fresh scores and re-render.
-        fetchLiveScores();
-        return;
-      }
-      box.innerHTML = countdownCells(remaining);
-    }, 1000);
-
-    function renderFixtures() {
-      const list = document.getElementById("fixturesList");
-      if (!list) return;
-
-      const pickedTeams = new Set(entries.map(e => normaliseTeam(e.team)));
-
-      const filtered = displayFixtures().filter(fixture => {
-        if (fixtureFilter === "group") return fixture.stage === "group";
-        if (fixtureFilter === "knockout") return fixture.stage !== "group";
-        if (fixtureFilter === "picked") {
-          return pickedTeams.has(normaliseTeam(fixture.home)) || pickedTeams.has(normaliseTeam(fixture.away));
-        }
-        return true;
-      });
-
-      if (!filtered.length) {
-        list.innerHTML = `<div class="fixtures-empty">No fixtures match this filter.</div>`;
-        return;
-      }
-
-      const byDay = {};
-      filtered.forEach(fixture => {
-        if (!byDay[fixture.date]) byDay[fixture.date] = { day: fixture.day, matches: [] };
-        byDay[fixture.date].matches.push(fixture);
-      });
-
-      list.innerHTML = Object.entries(byDay).map(([date, info]) => `
-        <div class="fixtures-day">
-          <div class="fixtures-day-header">
-            <span>${escapeHtml(info.day)}</span>
-            <span class="day-count">${info.matches.length} match${info.matches.length === 1 ? "" : "es"}</span>
-          </div>
-          ${info.matches.map(m => renderFixtureRow(m, pickedTeams)).join("")}
-        </div>
-      `).join("");
-    }
-
-    function renderFixtureRow(match, pickedTeams) {
-      const homePicked = pickedTeams.has(normaliseTeam(match.home));
-      const awayPicked = pickedTeams.has(normaliseTeam(match.away));
-      const highlight = homePicked || awayPicked;
-
-      const homeHtml = homePicked
-        ? `<span class="picked">${flagFor(match.home)}${escapeHtml(displayTeam(match.home))}</span>`
-        : `${flagFor(match.home)}${escapeHtml(displayTeam(match.home))}`;
-      const awayHtml = awayPicked
-        ? `<span class="picked">${flagFor(match.away)}${escapeHtml(displayTeam(match.away))}</span>`
-        : `${flagFor(match.away)}${escapeHtml(displayTeam(match.away))}`;
-
-      const matchup = `${homeHtml} ${scoreChip(scoreFor(match.home, match.away))} ${awayHtml}`;
-      const groupTag = match.group ? `Group ${match.group} · ` : "";
-
-      return `
-        <div class="fixture-row ${highlight ? "highlight" : ""}">
-          <div class="fixture-time">${escapeHtml(match.time)}</div>
-          <div class="fixture-teams">
-            <div class="fixture-matchup">${matchup}</div>
-            <div class="fixture-meta">${groupTag}${escapeHtml(match.venue)}</div>
-          </div>
-          <div class="fixture-stage stage-${match.stage}">${STAGE_LABELS[match.stage]}</div>
-        </div>
-      `;
-    }
-
-    function setFixtureFilter(filter) {
-      fixtureFilter = filter;
-      ["fixturesAllBtn", "fixturesPickedBtn", "fixturesGroupOnlyBtn", "fixturesKoOnlyBtn"].forEach(id => {
-        document.getElementById(id).classList.remove("primary");
-      });
-      const map = { all: "fixturesAllBtn", picked: "fixturesPickedBtn", group: "fixturesGroupOnlyBtn", knockout: "fixturesKoOnlyBtn" };
-      document.getElementById(map[filter]).classList.add("primary");
-      renderFixtures();
-    }
-
-    document.getElementById("fixturesAllBtn").addEventListener("click", () => setFixtureFilter("all"));
-    document.getElementById("fixturesPickedBtn").addEventListener("click", () => setFixtureFilter("picked"));
-    document.getElementById("fixturesGroupOnlyBtn").addEventListener("click", () => setFixtureFilter("group"));
-    document.getElementById("fixturesKoOnlyBtn").addEventListener("click", () => setFixtureFilter("knockout"));
-
-    // ===== WINNERS PAGE =====
-    function renderWinners() {
-      const host = document.getElementById("winnersContent");
-      if (!host) return;
-
-      // Who in the sweepstake held Spain?
-      const spainHolders = entries.filter(e => normaliseTeam(e.team) === "Spain" || e.team === "Spain");
-      const potTotal = entries.length * ENTRY_PRICE;
-      const winnerPrize = Math.floor(potTotal / 2);
-      const charityPrize = potTotal - winnerPrize;
-
-      let sweepHtml = "";
-      if (spainHolders.length) {
-        const byPerson = {};
-        spainHolders.forEach(e => {
-          const k = e.name.toLowerCase();
-          byPerson[k] = byPerson[k] || { name: e.name, count: 0 };
-          byPerson[k].count++;
-        });
-        const winners = Object.values(byPerson);
-        const share = winners.length > 0 ? Math.floor(winnerPrize / winners.length) : 0;
-        sweepHtml = `
-          <div class="win-sweep">
-            <h3>🎉 Our Sweepstake Winners</h3>
-            <div class="win-sweep-grid">
-              ${winners.map(w => `
-                <div class="win-sweep-card winner">
-                  <div class="wsc-label">🏆 Winner — £${share.toLocaleString("en-GB")} ${winners.length > 1 ? "each" : ""}</div>
-                  <div class="wsc-name">${escapeHtml(w.name)}</div>
-                  <div class="wsc-team">🇪🇸 Spain${w.count > 1 ? ` × ${w.count}` : ""}</div>
-                </div>
-              `).join("")}
-              <div class="win-sweep-card">
-                <div class="wsc-label">💚 Andy's Man Club</div>
-                <div class="wsc-name">£${charityPrize.toLocaleString("en-GB")}</div>
-                <div class="wsc-team">Half the pot to charity</div>
-              </div>
-              <div class="win-sweep-card">
-                <div class="wsc-label">💰 Total pot</div>
-                <div class="wsc-name">£${potTotal.toLocaleString("en-GB")}</div>
-                <div class="wsc-team">${entries.length} entries × £${ENTRY_PRICE}</div>
-              </div>
-            </div>
-          </div>`;
-      } else {
-        sweepHtml = `
-          <div class="win-sweep">
-            <h3>Sweepstake Result</h3>
-            <p style="color:var(--gxo-muted);">Nobody drew Spain in this sweepstake — check with the organiser about the prize!</p>
-            <div class="win-sweep-grid">
-              <div class="win-sweep-card">
-                <div class="wsc-label">💰 Total pot</div>
-                <div class="wsc-name">£${potTotal.toLocaleString("en-GB")}</div>
-                <div class="wsc-team">${entries.length} entries × £${ENTRY_PRICE}</div>
-              </div>
-            </div>
-          </div>`;
-      }
-
-      // Confetti
-      const colours = ["#ffd166","#ff5a00","#ffffff","#19c37d","#c60b1e","#aa151b"];
-      const confetti = Array.from({ length: 30 }, () => {
-        const style = `left:${Math.random()*100}%;background:${colours[Math.floor(Math.random()*colours.length)]};animation-delay:${(Math.random()*3).toFixed(2)}s;animation-duration:${(2.4+Math.random()*1.8).toFixed(2)}s`;
-        return `<i style="${style}"></i>`;
-      }).join("");
-
-      host.innerHTML = `<div id="winnersScaler">
-        <div class="win-hero">
-          <div class="win-confetti">${confetti}</div>
-          <div class="win-hero-inner">
-            <div class="win-trophy">🏆</div>
-            <img class="win-country-flag" src="https://flagcdn.com/h80/es.png" srcset="https://flagcdn.com/h160/es.png 2x" alt="Spain flag">
-            <div class="win-subtitle">FIFA World Cup 2026 Champions</div>
-            <div class="win-title">Spain</div>
-            <div class="win-final-score">
-              <div><div class="team">${flagFor("Spain")} Spain</div></div>
-              <div><div class="score">1 – 0</div><div class="detail">After extra time</div></div>
-              <div><div class="team">${flagFor("VARgentina")} VARgentina</div></div>
-            </div>
-            <div class="win-scorer">⚽ <b>Ferran Torres</b> 106' · MetLife Stadium, New Jersey · 19 July 2026</div>
-          </div>
-        </div>
-
-        <div class="win-body">
-          ${sweepHtml}
-
-          <div class="win-awards">
-            <div class="win-award">
-              <div class="win-award-icon">👟</div>
-              <div class="win-award-label">Golden Boot</div>
-              <div class="win-award-name">${flagFor("France")} Kylian Mbappé</div>
-              <div class="win-award-stat">10 goals · all-time WC record (22)</div>
-            </div>
-            <div class="win-award">
-              <div class="win-award-icon">⭐</div>
-              <div class="win-award-label">Golden Ball</div>
-              <div class="win-award-name">${flagFor("Spain")} Rodri</div>
-              <div class="win-award-stat">Best player of the tournament</div>
-            </div>
-            <div class="win-award">
-              <div class="win-award-icon">🧤</div>
-              <div class="win-award-label">Golden Glove</div>
-              <div class="win-award-name">${flagFor("VARgentina")} Emi Martínez</div>
-              <div class="win-award-stat">Kept VARgentina in it all night</div>
-            </div>
-            <div class="win-award">
-              <div class="win-award-icon">🌟</div>
-              <div class="win-award-label">Silver Ball</div>
-              <div class="win-award-name">${flagFor("VARgentina")} Lionel Messi</div>
-              <div class="win-award-stat">8 goals, 4 assists · likely his last WC</div>
-            </div>
-          </div>
-
-          <div class="win-facts">
-            <div class="win-fact">
-              <div class="win-fact-num">2nd</div>
-              <div class="win-fact-label">Spain's WC titles</div>
-              <div class="win-fact-desc">First in 2010. Now hold both the men's and women's World Cups simultaneously.</div>
-            </div>
-            <div class="win-fact">
-              <div class="win-fact-num">106'</div>
-              <div class="win-fact-label">Ferran Torres' winner</div>
-              <div class="win-fact-desc">Only the 2nd substitute to score the winning goal in a World Cup final.</div>
-            </div>
-            <div class="win-fact">
-              <div class="win-fact-num">38</div>
-              <div class="win-fact-label">Spain's unbeaten run</div>
-              <div class="win-fact-desc">Consecutive matches without a loss, including Euro 2024.</div>
-            </div>
-            <div class="win-fact">
-              <div class="win-fact-num">0</div>
-              <div class="win-fact-label">VARgentina shots on target</div>
-              <div class="win-fact-desc">Just 2 shots in 120 minutes. Spain had 20 attempts, 12 on target.</div>
-            </div>
-            <div class="win-fact">
-              <div class="win-fact-num">10</div>
-              <div class="win-fact-label">Mbappé goals</div>
-              <div class="win-fact-desc">Equals Müller's 1970 record. 22 career WC goals — new all-time record.</div>
-            </div>
-            <div class="win-fact">
-              <div class="win-fact-num">3rd</div>
-              <div class="win-fact-label">England finished</div>
-              <div class="win-fact-desc">Beat France 6–4 in the bronze medal match. Bellingham scored 7.</div>
-            </div>
-            <div class="win-fact">
-              <div class="win-fact-num">104</div>
-              <div class="win-fact-label">Matches played</div>
-              <div class="win-fact-desc">48 teams, 3 hosts — the biggest World Cup ever.</div>
-            </div>
-            <div class="win-fact">
-              <div class="win-fact-num">🏴󠁧󠁢󠁥󠁮󠁧󠁿</div>
-              <div class="win-fact-label">Semi-final exit</div>
-              <div class="win-fact-desc">Lost to Spain, then bounced back with that incredible 6–4 win over France.</div>
-            </div>
-          </div>
-        </div>
+      <div class="body-pad">
+        ${adminSetupForm(null)}
+        <p class="small-note" style="margin-top:18px;"><a class="nav-link" onclick="doSignOut()">Sign out</a></p>
       </div>`;
-      scaleWinners();
+    bindSetupForm(null);
+    return;
+  }
+
+  const guesses = (await getGuesses()).slice().sort((a,b) => a.timestamp - b.timestamp);
+  const winner = await getWinner();
+
+  app.innerHTML = `
+    <div class="header">
+      <div class="admin-topbar">
+        <div>
+          <p class="eyebrow">Admin · ${escapeHtml(auth.currentUser.email || '')}</p>
+          <h1>Control Panel</h1>
+        </div>
+      </div>
+      <p class="sub">Update the case, review guesses, and lock in the winner.</p>
+    </div>
+    <div class="body-pad">
+      ${adminSetupForm(cfg)}
+
+      <div class="section-title">Guesses (${guesses.length})</div>
+      ${winner ? `<div class="winner-banner">🏆 <b>${escapeHtml(winner.name)}</b> is locked in as the winner${winner.timestamp ? ' — ' + fmtDate(winner.timestamp) : ''}. <span class="nav-link" onclick="window.__unlockWinner()">Undo</span></div>` : `<p class="small-note">No winner locked in yet. Correct-looking guesses are highlighted below — click "Lock in" to make it official.</p>`}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Guess</th><th>When</th><th></th></tr></thead>
+          <tbody id="guessRows"></tbody>
+        </table>
+      </div>
+
+      <p class="small-note" style="margin-top:24px;">
+        <a class="nav-link" onclick="location.hash=''">← back to the case file</a>
+        &nbsp;·&nbsp;
+        <a class="nav-link" onclick="doSignOut()">Sign out</a>
+      </p>
+    </div>
+  `;
+
+  bindSetupForm(cfg);
+
+  const rows = $('#guessRows');
+  if(guesses.length === 0){
+    rows.innerHTML = `<tr><td colspan="4" class="small-note">No guesses submitted yet.</td></tr>`;
+  }else{
+    guesses.forEach(g => {
+      const tr = document.createElement('tr');
+      const isLockedWinner = winner && winner.id === g.id;
+      tr.className = (g.correct ? 'correct ' : '') + (isLockedWinner ? 'locked-row' : '');
+      tr.innerHTML = `
+        <td>${escapeHtml(g.name)}</td>
+        <td>${escapeHtml(g.guess)} ${g.correct ? '<span class="stamp-correct">✓ matches answer</span>' : ''}</td>
+        <td>${fmtDate(g.timestamp)}</td>
+        <td>${isLockedWinner ? '🏆 locked' : `<button class="secondary lock-btn" data-id="${g.id}">Lock in</button>`}</td>
+      `;
+      rows.appendChild(tr);
+    });
+    rows.querySelectorAll('button[data-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const g = guesses.find(x => x.id === btn.dataset.id);
+        await saveWinner({ id: g.id, name: g.name, guess: g.guess, timestamp: Date.now() });
+        renderAdmin();
+      });
+    });
+  }
+
+  window.__unlockWinner = async () => {
+    await saveWinner(null);
+    renderAdmin();
+  };
+}
+
+async function doSignOut(){
+  await auth.signOut();
+  location.hash = '';
+}
+
+function adminSetupForm(cfg){
+  const c = cfg || {};
+  return `
+    <div class="section-title">${cfg ? 'Case Settings' : 'Case Details'}</div>
+    <form id="setupForm">
+      <div>
+        <label>Image URL</label>
+        <input type="text" id="cfgImage" placeholder="https://..." value="${c.imageUrl ? escapeHtml(c.imageUrl) : ''}" required/>
+      </div>
+      <div class="grid2">
+        <div>
+          <label>Correct answer(s)</label>
+          <input type="text" id="cfgAnswer" placeholder="e.g. forklift, fork truck" value="${c.answer ? escapeHtml(c.answer) : ''}"/>
+        </div>
+        <div>
+          <label>Reveal days</label>
+          <input type="number" id="cfgDays" min="1" max="30" value="${c.totalDays || 7}"/>
+        </div>
+      </div>
+      <div class="grid2">
+        <div>
+          <label>Start zoom (×)</label>
+          <input type="number" id="cfgZoom" min="1.2" max="15" step="0.1" value="${c.maxZoom || 6}"/>
+        </div>
+        <div>
+          <label>Start time</label>
+          <input type="datetime-local" id="cfgStart" value="${c.startTime ? toLocalInputValue(c.startTime) : toLocalInputValue(new Date().toISOString())}"/>
+        </div>
+      </div>
+      <button type="submit">${cfg ? 'Save Changes' : 'Create Case'}</button>
+    </form>
+    <div id="setupMsg"></div>
+  `;
+}
+
+function toLocalInputValue(isoString){
+  const d = new Date(isoString);
+  const off = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - off*60000);
+  return local.toISOString().slice(0,16);
+}
+
+function bindSetupForm(existingCfg){
+  const form = $('#setupForm');
+  if(!form) return;
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const imageUrl = $('#cfgImage').value.trim();
+    const answer = $('#cfgAnswer').value.trim();
+    const totalDays = parseInt($('#cfgDays').value, 10) || 7;
+    const maxZoom = parseFloat($('#cfgZoom').value) || 6;
+    const startTimeLocal = $('#cfgStart').value;
+    const startTime = startTimeLocal ? new Date(startTimeLocal).toISOString() : new Date().toISOString();
+
+    const newCfg = { imageUrl, answer, totalDays, maxZoom, startTime };
+    try{
+      await saveConfig(newCfg);
+      const msgEl = $('#setupMsg');
+      if(msgEl) msgEl.innerHTML = `<div class="msg ok">Saved.</div>`;
+      renderAdmin();
+    }catch(err){
+      const msgEl = $('#setupMsg');
+      if(msgEl) msgEl.innerHTML = `<div class="msg err">Couldn't save: ${escapeHtml(err.message || 'permission denied')}</div>`;
     }
+  });
+}
 
-    function scaleWinners() {
-      const content = document.getElementById("winnersContent");
-      const scaler = document.getElementById("winnersScaler");
-      if (!content || !scaler) return;
-      // Reset scale so we can measure natural size
-      scaler.style.transform = "";
-      scaler.style.width = "";
-      const availH = content.clientHeight;
-      const availW = content.clientWidth;
-      const naturalH = scaler.scrollHeight;
-      const naturalW = scaler.scrollWidth;
-      if (naturalH <= availH) return; // already fits
-      const scale = Math.min(availH / naturalH, availW / naturalW);
-      scaler.style.transform = `scale(${scale})`;
-      // After scaling down, the scaler's layout size is still its natural size.
-      // Compensate so it doesn't leave a gap below.
-      scaler.style.marginBottom = `${(naturalH * scale - naturalH)}px`;
-    }
+// ---------- router ----------
+async function render(){
+  const hash = location.hash.replace('#','');
+  if(hash === 'submit'){ await renderSubmit(); }
+  else if(hash === 'admin'){ await renderAdmin(); }
+  else{ await renderGame(); }
+}
 
-    // Re-scale on resize
-    window.addEventListener("resize", scaleWinners);
+window.addEventListener('hashchange', render);
+auth.onAuthStateChanged(() => {
+  if(location.hash.replace('#','') === 'admin') renderAdmin();
+});
+render();
 
-
-    async function boot() {
-      try {
-        await seedDefaultTeamsIfEmpty();
-
-        onValue(teamsRef, snapshot => {
-          teams = snapshotToArray(snapshot)
-            .sort((a, b) => String(a.group).localeCompare(String(b.group), undefined, { numeric: true }) || String(a.name).localeCompare(String(b.name)));
-          renderAll();
-        }, error => {
-          console.error(error);
-          toast(`Teams database error: ${error.message}`);
-        });
-
-        onValue(entriesRef, snapshot => {
-          entries = snapshotToArray(snapshot)
-            .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
-          renderAll();
-        }, error => {
-          console.error(error);
-          toast(`Entries database error: ${error.message}`);
-        });
-      } catch (error) {
-        console.error(error);
-        toast("Firebase error. Check Realtime Database is enabled and rules allow reads/writes.");
-      }
-    }
-
-    boot();
-    fetchLiveScores();
-
-    // Refresh scores, knockout ties and survivors every minute.
-    setInterval(fetchLiveScores, 60 * 1000);
-  </script>
-
+// keep the zoom level fresh on the game view without a manual refresh
+setInterval(() => {
+  const hash = location.hash.replace('#','');
+  if(hash === '') renderGame();
+}, 60000);
+</script>
 </body>
 </html>
